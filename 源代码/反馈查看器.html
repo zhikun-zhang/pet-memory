@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐱 土豆拾光 - 反馈查看器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f0eb; min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #5a3e36; margin-bottom: 10px; }
+        .header p { color: #a08060; font-size: 14px; }
+        
+        .upload-area { background: white; border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); cursor: pointer; }
+        .upload-area:hover { background: #faf8f5; }
+        .upload-btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #ff9a6c 0%, #ff6b6b 100%); color: white; border-radius: 25px; font-weight: 500; }
+        #file-input { display: none; }
+        .upload-hint { color: #a08060; font-size: 13px; margin-top: 10px; }
+        
+        .stats { display: flex; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 12px; padding: 15px 20px; flex: 1; text-align: center; }
+        .stat-card .number { font-size: 24px; font-weight: 600; color: #5a3e36; }
+        .stat-card .label { font-size: 12px; color: #a08060; margin-top: 4px; }
+        
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border: 1px solid #e0d0c0; border-radius: 20px; background: white; cursor: pointer; font-size: 13px; }
+        .filter-btn.active { background: #ff9a6c; color: white; border-color: #ff9a6c; }
+        .clear-btn { padding: 8px 16px; background: #ffe5e5; color: #d63031; border-radius: 15px; cursor: pointer; font-size: 13px; }
+        .export-btn { padding: 8px 16px; background: #e5f5e5; color: #00b894; border-radius: 15px; cursor: pointer; font-size: 13px; }
+        
+        .feedback-list { background: white; border-radius: 16px; padding: 20px; }
+        .feedback-item { border-bottom: 1px solid #f0e8e0; padding: 20px 0; position: relative; }
+        .feedback-item:last-child { border-bottom: none; }
+        .feedback-item.completed { opacity: 0.6; }
+        .feedback-item.completed .feedback-content { text-decoration: line-through; color: #a08060; }
+        
+        .feedback-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .feedback-type-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .feedback-type { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .type-bug { background: #ffe5e5; color: #d63031; }
+        .type-feature { background: #e5f5e5; color: #00b894; }
+        .type-ui { background: #e5e5ff; color: #6c5ce7; }
+        .type-other { background: #faf8f5; color: #8b7355; }
+        
+        .priority-tag { padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .priority-tag.high { background: linear-gradient(135deg, #ff7675 0%, #fd79a8 100%); color: white; }
+        .priority-tag.medium { background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%); color: white; }
+        .priority-tag.low { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; }
+        
+        .dropdown { position: relative; }
+        .dropdown-btn { padding: 6px 12px; background: #f5f0eb; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 5px; }
+        .dropdown-btn:hover { background: #e8e0d5; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 8px 0; min-width: 140px; z-index: 100; }
+        .dropdown.show .dropdown-menu { display: block; }
+        .dropdown-item { padding: 10px 15px; font-size: 13px; color: #5a3e36; cursor: pointer; white-space: nowrap; }
+        .dropdown-item:hover { background: #f5f0eb; }
+        .dropdown-item.delete { color: #d63031; }
+        .dropdown-item.priority-high { color: #d63031; }
+        .dropdown-item.priority-medium { color: #e67e22; }
+        .dropdown-item.priority-low { color: #00b894; }
+        .dropdown-divider { height: 1px; background: #f0e8e0; margin: 8px 0; }
+        
+        .feedback-time { font-size: 12px; color: #a08060; margin-top: 8px; }
+        .feedback-content { font-size: 14px; color: #5a3e36; line-height: 1.6; margin: 12px 0; }
+        .feedback-images { display: flex; gap: 10px; flex-wrap: wrap; }
+        .feedback-image { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+        .feedback-contact { font-size: 13px; color: #a08060; }
+        
+        .empty { text-align: center; padding: 60px 20px; color: #a08060; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal img { max-width: 90%; max-height: 90vh; }
+        .close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐱 土豆拾光 - 反馈查看器</h1>
+            <p>加载导出的反馈数据，可视化查看和管理用户反馈</p>
+        </div>
+
+        <div class="upload-area" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" accept=".json" onchange="loadFeedbacks(event)">
+            <div class="upload-btn">📁 选择反馈文件</div>
+            <div class="upload-hint">支持 .json 格式的反馈导出文件</div>
+        </div>
+
+        <div id="content" style="display:none;">
+            <div class="stats">
+                <div class="stat-card"><div class="number" id="total">0</div><div class="label">总反馈</div></div>
+                <div class="stat-card"><div class="number" id="bug">0</div><div class="label">问题</div></div>
+                <div class="stat-card"><div class="number" id="feature">0</div><div class="label">建议</div></div>
+                <div class="stat-card"><div class="number" id="done">0</div><div class="label">已完成</div></div>
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filter('all')">全部</button>
+                <button class="filter-btn" onclick="filter('pending')">待处理</button>
+                <button class="filter-btn" onclick="filter('completed')">已完成</button>
+                <button class="filter-btn" onclick="filter('high')">高优先级</button>
+                <button class="clear-btn" onclick="clearAllData()">🗑️ 清空全部</button>
+                <button class="export-btn" onclick="exportAllData()">📥 导出全部数据</button>
+            </div>
+
+            <div class="feedback-list" id="list"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="img-modal">
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <img id="preview">
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'pet-feedback-viewer-data';
+        let allData = [];
+        let currentFilter = 'all';
+        let openDropdown = null;
+
+        function loadSavedData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    allData = JSON.parse(saved);
+                    document.getElementById('content').style.display = 'block';
+                    render();
+                } catch (e) { console.error('加载失败:', e); }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+        }
+
+        function loadFeedbacks(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    const newFeedbacks = (data.feedbacks || []).map(f => ({
+                        ...f, status: f.status || 'pending', priority: f.priority || 'medium',
+                        id: f.id || Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+                    }));
+                    allData = [...allData, ...newFeedbacks];
+                    saveData();
+                    render();
+                    document.getElementById('content').style.display = 'block';
+                } catch (err) { alert('文件格式错误'); }
+            };
+            reader.readAsText(file);
+        }
+
+        function filter(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            render();
+        }
+
+        function getFilteredData() {
+            return allData.filter(f => {
+                if (currentFilter === 'pending') return f.status === 'pending';
+                if (currentFilter === 'completed') return f.status === 'completed';
+                if (currentFilter === 'high') return f.priority === 'high';
+                return true;
+            }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        }
+
+        function toggleDropdown(idx) {
+            const dropdowns = document.querySelectorAll('.dropdown');
+            dropdowns.forEach((d, i) => {
+                if (i === idx) {
+                    d.classList.toggle('show');
+                    openDropdown = d.classList.contains('show') ? d : null;
+                } else {
+                    d.classList.remove('show');
+                }
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (openDropdown && !openDropdown.contains(e.target)) {
+                openDropdown.classList.remove('show');
+                openDropdown = null;
+            }
+        });
+
+        function render() {
+            const data = getFilteredData();
+
+            const stats = {
+                total: allData.length,
+                bug: allData.filter(f => f.type === 'bug').length,
+                feature: allData.filter(f => f.type === 'feature').length,
+                done: allData.filter(f => f.status === 'completed').length
+            };
+
+            document.getElementById('total').textContent = stats.total;
+            document.getElementById('bug').textContent = stats.bug;
+            document.getElementById('feature').textContent = stats.feature;
+            document.getElementById('done').textContent = stats.done;
+
+            if (!data.length) {
+                document.getElementById('list').innerHTML = '<div class="empty">📭 暂无反馈数据</div>';
+                return;
+            }
+
+            const typeLabels = {
+                bug: { text: '🐛 功能问题', class: 'type-bug' },
+                feature: { text: '✨ 功能建议', class: 'type-feature' },
+                ui: { text: '🎨 界面优化', class: 'type-ui' },
+                other: { text: '💬 其他', class: 'type-other' }
+            };
+
+            let html = '';
+            data.forEach((f, idx) => {
+                const type = typeLabels[f.type] || typeLabels.other;
+                const date = new Date(f.timestamp);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+
+                let images = '';
+                if (f.imagesData && f.imagesData.length) {
+                    images = '<div class="feedback-images">' + f.imagesData.map((img, i) => 
+                        `<img src="data:image/jpeg;base64,${img}" class="feedback-image" onclick="previewImg('data:image/jpeg;base64,${img}')">`
+                    ).join('') + '</div>';
+                }
+
+                html += `
+                    <div class="feedback-item ${f.status === 'completed' ? 'completed' : ''}">
+                        <div class="feedback-header">
+                            <div class="feedback-type-row">
+                                <span class="feedback-type ${type.class}">${type.text}</span>
+                                <span class="priority-tag ${f.priority}">${f.priority === 'high' ? '🔴 高优先级' : f.priority === 'medium' ? '🟡 中优先级' : '🟢 低优先级'}</span>
+                            </div>
+                            <div class="dropdown">
+                                <button class="dropdown-btn" onclick="toggleDropdown(${idx}); event.stopPropagation()">标记状态 ▼</button>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-item" onclick="toggleStatus(${idx})">${f.status === 'completed' ? '🔄 标记未完成' : '✅ 标记完成'}</div>
+                                    <div class="dropdown-item priority-high" onclick="setPriority(${idx}, 'high')">🔴 高优先级</div>
+                                    <div class="dropdown-item priority-medium" onclick="setPriority(${idx}, 'medium')">🟡 中优先级</div>
+                                    <div class="dropdown-item priority-low" onclick="setPriority(${idx}, 'low')">🟢 低优先级</div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-item delete" onclick="deleteFeedback(${idx})">🗑️ 删除</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="feedback-time">📅 ${dateStr}</div>
+                        <div class="feedback-content">${f.content}</div>
+                        ${images}
+                        ${f.contact ? '<div class="feedback-contact">📧 ' + f.contact + '</div>' : ''}
+                    </div>
+                `;
+            });
+
+            document.getElementById('list').innerHTML = html;
+        }
+
+        function toggleStatus(idx) {
+            const filtered = getFilteredData();
+            const originalIdx = allData.indexOf(filtered[idx]);
+            if (originalIdx >= 0) {
+                allData[originalIdx].status = allData[originalIdx].status === 'completed' ? 'pending' : 'completed';
+                saveData();
+                render();
+            }
+        }
+
+        function setPriority(idx, p) {
+            const filtered = getFilteredData();
+            const originalIdx = allData.indexOf(filtered[idx]);
+            if (originalIdx >= 0) {
+                allData[originalIdx].priority = p;
+                saveData();
+                render();
+            }
+        }
+
+        function deleteFeedback(idx) {
+            const filtered = getFilteredData();
+            const originalIdx = allData.indexOf(filtered[idx]);
+            if (originalIdx >= 0 && confirm('确定删除这条反馈吗？')) {
+                allData.splice(originalIdx, 1);
+                saveData();
+                render();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('确定清空所有数据吗？')) {
+                allData = [];
+                saveData();
+                document.getElementById('content').style.display = 'none';
+            }
+        }
+
+        function exportAllData() {
+            const sortedData = [...allData].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const exportData = {
+                type: 'feedback-backup',
+                version: '1.0',
+                exportTime: new Date().toISOString(),
+                feedbacks: sortedData
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date();
+            a.download = `反馈数据_${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function previewImg(src) {
+            document.getElementById('preview').src = src;
+            document.getElementById('img-modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('img-modal').classList.remove('show');
+        }
+
+        document.getElementById('img-modal').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', loadSavedData);
+    </script>
+</body>
+</html>

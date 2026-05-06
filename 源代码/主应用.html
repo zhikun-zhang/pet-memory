@@ -1,0 +1,2602 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐱 土豆拾光 - 宠物记录</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); min-height: 100vh; padding: 15px; opacity: 0; transition: opacity 0.3s ease; }
+        body.loaded { opacity: 1; }
+        
+        /* 加载动画 */
+        .loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader-icon { font-size: 60px; animation: catBounce 1s ease-in-out infinite; }
+        .loader-text { margin-top: 20px; color: #5a3e36; font-size: 16px; font-weight: 500; }
+        .loader-dots { margin-top: 10px; font-size: 20px; animation: dots 1.5s infinite; }
+        
+        @keyframes catBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(-5deg); }
+            75% { transform: translateY(-10px) rotate(5deg); }
+        }
+        
+        @keyframes dots {
+            0%, 20% { opacity: 0.3; }
+            50% { opacity: 1; }
+            80%, 100% { opacity: 0.3; }
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { text-align: center; color: #5a3e36; margin-bottom: 15px; font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; }
+        .header-settings { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; color: #a08060; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; }
+        .header-settings:hover { color: #5a3e36; background: rgba(255,255,255,0.5); }
+
+        .tabs-container { position: relative; margin-bottom: 15px; }
+        .tabs { display: flex; gap: 5px; overflow-x: auto; scroll-behavior: smooth; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab { padding: 7px 11px; background: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; color: #5a3e36; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+        .tab.active { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+
+        /* 设置页面 */
+        .settings-page { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fef9f3; z-index: 100; display: none; flex-direction: column; }
+        .settings-page.active { display: flex; }
+        .settings-header { display: flex; align-items: center; justify-content: center; padding: 12px 16px; border-bottom: 1px solid #f0e6de; background: #fff; position: relative; }
+        .settings-back-btn { position: absolute; left: 12px; background: none; border: none; font-size: 22px; font-weight: 300; color: #5a3e36; cursor: pointer; padding: 4px 8px; line-height: 1; }
+        .settings-back-btn:hover { color: #a08060; }
+        .settings-title { font-size: 17px; font-weight: 600; color: #5a3e36; }
+        .settings-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .settings-group { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .settings-group:last-child { margin-bottom: 0; }
+        .settings-label { font-size: 15px; font-weight: 600; color: #5a3e36; margin-bottom: 4px; }
+        .settings-desc { font-size: 12px; color: #999; margin-bottom: 12px; }
+        .settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; font-size: 14px; color: #5a3e36; }
+        .settings-toggle + .settings-toggle { border-top: 1px solid #f0e6de; }
+        .settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; font-size: 13px; color: #5a3e36; }
+        .settings-toggle + .settings-toggle { border-top: 1px solid #f0e6de; }
+        .settings-toggle input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 44px; height: 24px; background: #ddd; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+        .settings-toggle input[type=checkbox]::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        .settings-toggle input[type=checkbox]:checked { background: #d4a574; }
+        .settings-toggle input[type=checkbox]:checked::after { transform: translateX(20px); }
+
+        .content { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .pet-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .pet-card { background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%); border-radius: 14px; padding: 12px; }
+        .pet-card .pet-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .pet-card .avatar { width: 60px; height: 60px; border-radius: 10px; background: #f0e0d0; display: flex; align-items: center; justify-content: center; font-size: 30px; overflow: hidden; cursor: pointer; position: relative; flex-shrink: 0; }
+        .pet-card .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+        .pet-card .avatar:hover::after { content: '换头像'; position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+        .pet-card .pet-name { font-size: 17px; color: #5a3e36; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .pet-card .gender-icon { font-size: 15px; }
+        .pet-card .companion { font-size: 12px; color: #e17055; font-style: italic; margin-top: 3px; font-weight: 500; }
+        .pet-card .pet-breed { color: #8b7355; font-size: 12px; }
+        .pet-card .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .pet-card .info-item { background: rgba(255,255,255,0.6); padding: 5px 8px; border-radius: 6px; font-size: 12px; white-space: nowrap; }
+        .pet-card .info-item label { color: #a08060; font-size: 10px; display: block; white-space: nowrap; }
+        .pet-card .info-item .value { font-weight: 500; }
+        .pet-card .info-item .value.yes { color: #1dd1a1; }
+        .pet-card .info-item .value.no { color: #ff6b6b; }
+        .pet-card .info-item .value.unknown { color: #a08060; }
+        .pet-card { cursor: pointer; transition: transform 0.2s ease; }
+.pet-card:active { transform: scale(0.98); }
+
+        .form-group { margin-bottom: 12px; }
+        .quick-btns { display: flex; gap: 6px; margin-top: 6px; }
+        .btn-quick { flex: 1; padding: 6px 8px; font-size: 12px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; color: #555; }
+        .btn-quick:hover { background: #e0e0e0; }
+        .form-group label { display: block; color: #5a3e36; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 2px solid #f0e0d0; border-radius: 8px; font-size: 15px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #ff9a9e; }
+        .form-group textarea { min-height: 60px; }
+        .form-hint { font-size: 12px; color: #a08060; margin-top: 4px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* 日记图片上传 */
+        .diary-images-area { display: flex; flex-wrap: wrap; gap: 10px; }
+        .diary-images-preview { display: flex; flex-wrap: wrap; gap: 10px; }
+        .diary-img-thumb { position: relative; width: 76px; height: 76px; border-radius: 10px; overflow: hidden; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .diary-img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .diary-img-thumb .img-del { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 50%; font-size: 14px; line-height: 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .diary-img-thumb .img-del:hover { background: #ff6b6b; transform: scale(1.1); }
+        .diary-image-add { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 76px; height: 76px; border: 2px dashed #d0c0b0; border-radius: 10px; cursor: pointer; color: #a08060; font-size: 24px; flex-shrink: 0; transition: all 0.3s; background: #faf8f5; }
+        .diary-image-add:hover { border-color: #ff9a9e; color: #ff9a9e; background: #fff0f0; transform: scale(1.05); }
+        .diary-image-add:active { transform: scale(0.95); }
+        .diary-image-add span { font-size: 11px; margin-top: 4px; }
+        .diary-image-add input { display: none; }
+
+        /* 日记列表图片展示 */
+        .diary-img-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .diary-img-list img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; }
+
+        /* 图片预览弹窗 */
+        .img-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .img-lightbox img { max-width: 95%; max-height: 95%; border-radius: 8px; }
+        .img-lightbox .lb-close { position: fixed; top: 16px; right: 20px; color: #fff; font-size: 32px; background: none; border: none; cursor: pointer; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-primary { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #5a3e36; }
+        .btn-secondary { background: #f5f5f5; color: #5a3e36; }
+        .data-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .btn-danger { background: #ff6b6b; color: white; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-bar select { padding: 8px 12px; border: 2px solid #f0e0d0; border-radius: 8px; font-size: 14px; min-width: 130px; }
+
+        .record-list { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .record-item { background: #ffffff; border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); transition: all 0.2s; border: 1px solid #f0e8e0; cursor: pointer; }
+        .record-item:active { transform: scale(0.98); }
+        .record-item .left { flex: 1; min-width: 0; }
+        .record-item .pet-tag { display: inline-block; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #5a3e36; padding: 2px 8px; border-radius: 16px; font-size: 11px; font-weight: 500; margin-right: 6px; }
+        .record-item .title { color: #5a3e36; font-weight: 500; font-size: 14px; margin: 6px 0 4px; line-height: 1.4; word-break: break-all; }
+        .record-item .meta { color: #a08060; font-size: 12px; }
+        .record-item .right { flex-shrink: 0; }
+        .record-item .right .img-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #f0e8e0; }
+        .record-item .right .btn { display: none; }
+
+        .alert { background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border-radius: 10px; padding: 12px; margin-bottom: 15px; color: #856404; font-size: 13px; }
+
+        .weight-chart { background: #faf8f5; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        .weight-chart h4 { color: #5a3e36; margin-bottom: 12px; font-size: 15px; }
+        
+        .legend { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+        .legend-color { width: 16px; height: 3px; border-radius: 2px; }
+
+        .empty { text-align: center; color: #a08060; padding: 30px; font-size: 14px; }
+
+
+
+        .modal, .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 16px; padding: 20px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-header h3 { color: #5a3e36; font-size: 18px; }
+        .close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #a08060; }
+
+        .avatar-upload { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .avatar-preview-wrap { position: relative; }
+        .avatar-preview { width: 80px; height: 80px; border-radius: 50%; background: #f0e0d0; display: flex; align-items: center; justify-content: center; font-size: 40px; overflow: hidden; cursor: pointer; position: relative; }
+        .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-preview:hover::after { content: '点击上传'; position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .avatar-preview-wrap input { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
+        .avatar-hint { font-size: 12px; color: #a08060; }
+        .pet-detail-avatar { background: #f0e0d0; display: flex; align-items: center; justify-content: center; font-size: 60px; overflow: hidden; }
+        .pet-detail-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .quick-actions { background: #faf8f5; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .quick-actions h4 { color: #5a3e36; margin-bottom: 12px; font-size: 14px; }
+        .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; background: white; border: 2px solid #f0e0d0; border-radius: 8px; cursor: pointer; }
+        .action-btn:hover { border-color: #ff9a9e; }
+        .action-btn span:first-child { font-size: 20px; }
+
+        @media (max-width: 600px) {
+            body { padding: 8px; }
+            h1 { font-size: 20px; margin-bottom: 10px; }
+            h1 span { font-size: 28px; }
+            .tabs-container { margin-bottom: 10px; }
+            .tabs { gap: 4px; }
+            .tab { padding: 6px 9px; font-size: 12px; border-radius: 7px; }
+            .content { padding: 12px; border-radius: 14px; }
+            .pet-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .pet-card { padding: 10px; }
+            .pet-card .avatar { width: 50px; height: 50px; font-size: 24px; border-radius: 8px; }
+            .pet-card .avatar img { border-radius: 8px; }
+            .pet-card .pet-name { font-size: 15px; }
+            .pet-card .info-grid { grid-template-columns: repeat(2, 1fr); gap: 4px; }
+            .pet-card .info-item { padding: 4px 6px; font-size: 11px; white-space: nowrap; }
+            .pet-card .info-item label { font-size: 9px; white-space: nowrap; }
+            .pet-card .actions { flex-wrap: wrap; }
+            .form-row { grid-template-columns: 1fr; }
+            .btn { padding: 10px 16px; font-size: 14px; }
+            .filter-bar { flex-direction: column; gap: 8px; }
+            .filter-bar select { width: 100%; }
+            .record-item { padding: 10px; }
+            .record-item .right { opacity: 1; visibility: visible; transform: none; }
+            .modal-content { width: 95%; max-height: 90vh; padding: 15px; border-radius: 12px; }
+            .modal-header h3 { font-size: 16px; }
+            .data-toolbar { gap: 6px; }
+            .data-toolbar .btn { flex: 1; text-align: center; font-size: 13px; padding: 8px 10px; }
+            .action-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+            .action-btn { padding: 8px 4px; }
+            .action-btn span:first-child { font-size: 18px; }
+            .action-btn span:last-child { font-size: 11px; }
+            .quick-actions { padding: 10px; }
+            .weight-chart { padding: 10px; }
+            .header-settings { font-size: 18px; }
+        }
+        .action-btn span:last-child { font-size: 11px; color: #5a3e36; }
+
+        .diary-detail-page { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 100; display: flex; flex-direction: column; }
+        .detail-header { display: flex; align-items: center; padding: 15px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #fff; position: sticky; top: 0; z-index: 10; }
+        .detail-back-btn { font-size: 28px; background: none; border: none; color: #fff; margin-right: 10px; cursor: pointer; padding: 0 8px; }
+        .detail-title { font-size: 18px; font-weight: 600; }
+        .detail-body { flex: 1; padding: 20px; overflow-y: auto; }
+        .detail-pet-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #f0e8e0; }
+        .detail-pet-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 500; }
+        .detail-type-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; background: #f5f0eb; color: #5a3e36; }
+        .detail-info-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px; }
+        .detail-date { color: #a08060; font-size: 14px; }
+        .detail-divider { height: 1px; background: #f0e8e0; margin: 20px 0; }
+        .detail-content { font-size: 16px; line-height: 1.8; color: #5a3e36; white-space: pre-wrap; }
+        .detail-images { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+        .detail-images img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; cursor: pointer; transition: transform 0.2s; }
+        .detail-images img:hover { transform: scale(1.02); }
+        .detail-images img:active { transform: scale(0.98); }
+        .detail-amount { font-size: 16px; color: #e74c3c; font-weight: 500; margin-top: 15px; padding: 12px; background: #fff5f5; border-radius: 10px; display: flex; align-items: center; gap: 8px; }
+        .detail-amount::before { content: '💰'; }
+        .detail-detail { font-size: 14px; color: #6a5a4a; padding: 12px; background: #faf8f5; border-radius: 10px; margin-top: 15px; }
+        .detail-footer { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #f0e8e0; background: #fff; position: sticky; bottom: 0; }
+        .detail-footer .btn { flex: 1; padding: 12px; font-size: 15px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loader" id="loader">
+        <div class="loader-icon">🐱</div>
+        <div class="loader-text">正在加载中...</div>
+        <div class="loader-dots">●●●</div>
+    </div>
+    
+    <div class="container">
+        <h1>
+            <span style="font-size:36px">🐱</span>
+            土豆拾光
+            <button class="header-settings" onclick="switchTab('settings')">⚙️</button>
+        </h1>
+
+        <div class="tabs-container">
+            <div class="tabs" id="tabs">
+                <button class="tab active" onclick="switchTab('pets')">🐾 我的宠物</button>
+                <button class="tab" onclick="switchTab('diary')">📝 日记</button>        
+                <button class="tab" onclick="switchTab('groom')">🛁 洗护</button>        
+                <button class="tab" onclick="switchTab('weight')">⚖️ 体重</button>       
+                <button class="tab" onclick="switchTab('expense')">💰 记账</button>
+                <button class="tab" onclick="switchTab('food')">🍚 饮食</button>         
+                <button class="tab" onclick="switchTab('deworm')">💊 驱虫</button>        
+                <button class="tab" onclick="switchTab('vaccine')">💉 疫苗</button>       
+                <button class="tab" onclick="switchTab('neuter')">🏥 绝育</button>        
+                <button class="tab" onclick="switchTab('medical')">📋 病例</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 我的宠物 -->
+            <div class="panel active" id="pets-panel">
+                <div class="pet-cards" id="pet-cards"></div>
+            </div>
+
+            <!-- 日记 -->
+            <div class="panel" id="diary-panel">
+                <div class="filter-bar">
+                    <select id="diary-filter" onchange="renderList('diary')"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddDiaryModal()">+ 写日记</button>
+                </div>
+                <div class="record-list" id="diary-list"></div>
+            </div>
+
+            <!-- 疫苗 -->
+            <div class="panel" id="vaccine-panel">
+                <div class="filter-bar">
+                    <select id="vaccine-filter" onchange="renderList('vaccine')"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddModal('vaccine')">+ 添加疫苗</button>
+                </div>
+                <div class="record-list" id="vaccine-list"></div>
+            </div>
+
+            <!-- 驱虫 -->
+            <div class="panel" id="deworm-panel">
+                <div class="filter-bar">
+                    <select id="deworm-filter" onchange="renderList('deworm')"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddModal('deworm')">+ 添加驱虫</button>
+                </div>
+                <div class="alert" id="deworm-alert" style="display:none"></div>
+                <div class="record-list" id="deworm-list"></div>
+            </div>
+
+            <!-- 洗护 -->
+            <div class="panel" id="groom-panel">
+                <div class="filter-bar">
+                    <select id="groom-filter" onchange="renderList('groom')"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddModal('groom')">+ 添加洗护</button>
+                </div>
+                <div class="alert" id="groom-alert" style="display:none"></div>
+                <div class="record-list" id="groom-list"></div>
+            </div>
+
+            <!-- 饮食 -->
+            <div class="panel" id="food-panel">
+                <div class="filter-bar">
+                    <select id="food-filter" onchange="renderList('food')"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddModal('food')">+ 记录饮食</button>
+                </div>
+                <div class="record-list" id="food-list"></div>
+            </div>
+
+            <!-- 病例 -->
+            <div class="panel" id="medical-panel">
+                <div class="filter-bar">
+                    <select id="medical-filter" onchange="renderList('medical')"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddModal('medical')">+ 添加病例</button>
+                </div>
+                <div class="record-list" id="medical-list"></div>
+            </div>
+
+            <!-- 绝育 -->
+            <div class="panel" id="neuter-panel">
+                <div class="filter-bar">
+                    <select id="neuter-filter" onchange="renderList('neuter')"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddModal('neuter')">+ 记录绝育</button>
+                </div>
+                <div class="record-list" id="neuter-list"></div>
+            </div>
+
+            <!-- 体重 -->
+            <div class="panel" id="weight-panel">
+                <div class="filter-bar">
+                    <select id="weight-filter" onchange="renderWeight()"><option value="all">全部宠物</option></select>
+                    <button class="btn btn-primary" onclick="showAddModal('weight')">+ 记录体重</button>
+                </div>
+                <div class="weight-chart">
+                    <h4>📈 体重趋势</h4>
+                    <canvas id="weightChart"></canvas>
+                    <div class="legend" id="weight-legend"></div>
+                </div>
+                <div class="record-list" id="weight-list"></div>
+            </div>
+            
+            <!-- 记账 -->
+            <div class="panel" id="expense-panel">
+                <div class="filter-bar">
+                    <select id="expense-filter" onchange="renderExpense()"><option value="all">全部宠物</option></select>
+                </div>
+                <div class="record-list" id="expense-list"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 宠物详情页（全屏模态框） -->
+    <div class="modal-overlay" id="pet-detail-modal" style="display:none;">
+        <div class="diary-detail-page">
+            <div class="detail-header">
+                <button class="detail-back-btn" onclick="closePetDetail()">‹</button>
+                <span class="detail-title">宠物详情</span>
+            </div>
+            <div class="detail-body" id="pet-detail-content">
+                <div style="text-align:center;margin-bottom:20px;">
+                    <div class="pet-detail-avatar" id="pet-detail-avatar" style="width:120px;height:120px;border-radius:50%;margin:0 auto;"></div>
+                    <h2 id="pet-detail-name" style="margin-top:15px;color:#5a3e36;"></h2>
+                    <p id="pet-detail-breed" style="color:#8b7355;font-size:14px;"></p>
+                </div>
+                
+                <div class="detail-divider"></div>
+                
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:20px;">
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">性别</div>
+                        <div id="pet-detail-gender" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">年龄</div>
+                        <div id="pet-detail-age" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">体重</div>
+                        <div id="pet-detail-weight" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">疫苗</div>
+                        <div id="pet-detail-vaccine" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">绝育</div>
+                        <div id="pet-detail-neuter" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">陪伴天数</div>
+                        <div id="pet-detail-companion" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;grid-column:span 2;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">出生日期</div>
+                        <div id="pet-detail-birth" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                    <div style="background:#faf8f5;padding:12px;border-radius:10px;grid-column:span 2;">
+                        <div style="color:#a08060;font-size:12px;margin-bottom:4px;">到家日期</div>
+                        <div id="pet-detail-arrivedate" style="color:#5a3e36;font-weight:500;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-footer">
+                <button class="btn btn-secondary" onclick="event.stopPropagation();editPetFromDetail()">编辑</button>
+                <button class="btn btn-danger" onclick="event.stopPropagation();deletePetFromDetail()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日记详情页（全屏模态框） -->
+    <div class="modal-overlay" id="diary-detail-modal" style="display:none;">
+        <div class="diary-detail-page">
+            <div class="detail-header">
+                <button class="detail-back-btn" onclick="closeDiaryDetail()">‹</button>
+                <span class="detail-title">日记详情</span>
+            </div>
+            <div class="detail-body" id="diary-detail-content">
+                <div class="detail-info-row">
+                    <img id="detail-pet-avatar" class="detail-pet-avatar" src="" alt="宠物头像" />
+                    <span id="detail-pet-tag" class="detail-pet-tag"></span>
+                    <span id="detail-type-tag" class="detail-type-tag"></span>
+                </div>
+                <div id="detail-date" class="detail-date"></div>
+                <div class="detail-divider"></div>
+                <div id="detail-content" class="detail-content"></div>
+                <div id="detail-detail" class="detail-detail" style="display:none;"></div>
+                <div id="detail-amount" class="detail-amount" style="display:none;"></div>
+                <div id="detail-images" class="detail-images"></div>
+            </div>
+            <div class="detail-footer">
+                <button class="btn btn-secondary" onclick="editDiaryFromDetail()">编辑</button>
+                <button class="btn btn-danger" onclick="deleteDiaryFromDetail()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置页面（独立全屏页） -->
+    <div class="settings-page" id="settings-page">
+        <div class="settings-header">
+            <button class="settings-back-btn" onclick="closeSettings()">‹</button>
+            <span class="settings-title">功能设置</span>
+        </div>
+        <div class="settings-body">
+            <div class="settings-group">
+                <div class="settings-label">🐾 宠物</div>
+                <div class="settings-desc">管理你的毛孩子信息</div>
+                <button class="btn btn-primary btn-small" onclick="showAddPetModal()">+ 添加宠物</button>
+            </div>
+            <div class="settings-group">
+                <div class="settings-label">📊 数据</div>
+                <div class="settings-desc">备份或恢复所有记录</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn btn-secondary btn-small" onclick="exportData()">📤 导出备份</button>
+                    <button class="btn btn-secondary btn-small" onclick="document.getElementById('importFile').click()">📥 导入恢复</button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this.files[0])">
+            </div>
+            <div class="settings-group">
+                <div class="settings-label">💬 意见反馈</div>
+                <div class="settings-desc">您的反馈是我们改进的动力</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn btn-primary btn-small" onclick="showFeedbackModal()">📝 提交反馈</button>
+                    <button class="btn btn-secondary btn-small" onclick="showMyFeedbacks()">📋 我的反馈</button>
+                </div>
+            </div>
+            <div class="settings-group">
+                <div class="settings-label">🗂 显示标签</div>
+                <div class="settings-desc">自定义首页显示的功能模块</div>
+                <div id="settings-tab-toggles"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 反馈表单 -->
+    <div class="modal" id="feedback-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 意见反馈</h3>
+                <button class="close-btn" onclick="closeModal('feedback-modal')">&times;</button>
+            </div>
+            <form id="feedback-form">
+                <div class="form-group">
+                    <label>反馈类型</label>
+                    <select id="feedback-type">
+                        <option value="bug">🐛 功能问题</option>
+                        <option value="feature">✨ 功能建议</option>
+                        <option value="ui">🎨 界面优化</option>
+                        <option value="other">💬 其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>反馈内容 *</label>
+                    <textarea id="feedback-content" rows="5" placeholder="请详细描述您的反馈内容..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>联系方式（选填）</label>
+                    <input type="text" id="feedback-contact" placeholder="邮箱、微信或其他联系方式">
+                </div>
+                <div class="form-group">
+                    <label>📷 图片（选填，最多3张）</label>
+                    <div class="diary-images-area">
+                        <div id="feedback-images-preview" class="diary-images-preview"></div>
+                        <label class="diary-image-add">
+                            <input type="file" id="feedback-image-input" accept="image/*" multiple onchange="previewFeedbackImages(event)">
+                            <span>+ 添加图片</span>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="submitFeedback()" style="width:100%;margin-top:8px;">提交反馈</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 我的反馈列表 -->
+    <div class="modal" id="myfeedbacks-modal" oncontextmenu="return false;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 我的反馈</h3>
+                <button class="close-btn" onclick="closeModal('myfeedbacks-modal')">&times;</button>
+            </div>
+            <div id="myfeedbacks-list" style="max-height: 350px; overflow-y: auto;">
+                <div class="empty">暂无反馈记录</div>
+            </div>
+            <div style="padding:12px;border-top:1px solid #f0e8e0;margin-top:10px;">
+                <button class="btn btn-secondary btn-small" onclick="exportFeedbacks()" style="width:100%;">📤 导出反馈数据</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片预览 -->
+    <div class="modal" id="img-preview-modal" style="background:rgba(0,0,0,0.9);">
+        <div class="modal-content" style="background:transparent;border:none;">
+            <button class="close-btn" onclick="closeModal('img-preview-modal')" style="color:#fff;top:10px;right:10px;position:absolute;z-index:10;">&times;</button>
+            <div style="display:flex;align-items:center;justify-content:center;height:80vh;gap:10px;">
+                <button onclick="prevPreviewImage()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:20px;">‹</button>
+                <img id="preview-img" style="max-width:90%;max-height:80vh;object-contain;border-radius:8px;" />
+                <button onclick="nextPreviewImage()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:20px;">›</button>
+            </div>
+            <div style="text-align:center;color:#fff;margin-top:10px;" id="preview-index"></div>
+        </div>
+    </div>
+
+    <!-- 宠物表单 -->
+    <div class="modal" id="pet-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="pet-modal-title">添加宠物</h3>
+                <button class="close-btn" onclick="closeModal('pet-modal')">&times;</button>
+            </div>
+            <form id="pet-form">
+                <input type="hidden" id="pet-id">
+                <div class="avatar-upload">
+                    <div class="avatar-preview-wrap">
+                        <div class="avatar-preview" id="avatar-preview">🐱</div>
+                        <input type="file" id="pet-avatar" accept="image/*" onchange="previewAvatar(event)">
+                    </div>
+                    <span class="avatar-hint">点击头像可上传/更换</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>名字 *</label><input type="text" id="pet-name" required></div>
+                    <div class="form-group"><label>性别</label>
+                        <select id="pet-gender"><option value="unknown">未知</option><option value="male">公</option><option value="female">母</option></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>品种</label><input type="text" id="pet-breed" placeholder="如:狸花猫"></div>
+                    <div class="form-group"><label>种类</label>
+                        <select id="pet-type"><option value="cat">猫</option><option value="dog">狗</option><option value="other">其他</option></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>生日</label><input type="date" id="pet-birth"></div>
+                    <div class="form-group"><label>到家日期</label><input type="date" id="pet-arrivedate"></div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="savePet()" style="width:100%;margin-top:8px;">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 通用记录表单 -->
+    <div class="modal" id="record-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="record-modal-title">添加记录</h3>
+                <button class="close-btn" onclick="closeModal('record-modal')">&times;</button>
+            </div>
+            <form id="record-form">
+                <input type="hidden" id="record-type">
+                <div class="form-group"><label>宠物 *</label><select id="record-pet" required></select></div>
+                <div class="form-group"><label>日期 *</label><input type="date" id="record-date" required></div>
+                
+                <div class="form-group" id="record-detail-group" style="display:none"><label id="record-detail-label">详情</label><input type="text" id="record-detail"></div>
+                <div class="form-group" id="record-amount-group"><label>💰 花费（元）</label><input type="number" id="record-amount" step="0.01" placeholder="选填，可留空" min="0"></div>
+                <div class="form-group" id="record-note-group"><label>备注</label><textarea id="record-note"></textarea></div>
+                <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 日记表单(统一入口) -->
+    <div class="modal" id="diary-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>写日记</h3>
+                <button class="close-btn" onclick="closeModal('diary-modal')">&times;</button>
+            </div>
+            <form id="diary-form">
+                <div class="form-group"><label>宠物 *</label><select id="diary-pet" required></select></div>
+                <div class="form-row">
+                    <div class="form-group"><label>日期时间 *</label>
+                    <input type="datetime-local" id="diary-datetime" step="0" required>
+                </div>
+                    <div class="form-group"><label>记录类型</label>
+                        <select id="diary-type" onchange="onDiaryTypeChange()">
+                            <option value="diary">📝 纯日记</option>
+                            <option value="groom">🛁 洗护</option>
+                            <option value="weight">⚖️ 体重</option>
+                            <option value="food">🍚 饮食</option>
+                            <option value="deworm">💊 驱虫</option>
+                            <option value="vaccine">💉 疫苗</option>
+                            <option value="neuter">🏥 绝育</option>
+                            <option value="medical">📋 病例</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="diary-detail-group" style="display:none"><label id="diary-detail-label">详情</label><input type="text" id="diary-detail"></div>
+                <div class="form-group" id="diary-amount-group"><label>💰 花费（元）</label><input type="number" id="diary-amount" step="0.01" placeholder="选填，可留空" min="0"></div>
+                <div class="form-group" id="diary-content-group"><label>内容 / 备注 *</label><textarea id="diary-content" required placeholder="记录内容..." maxlength="500" oninput="updateContentLength()"></textarea><span id="diary-content-length" style="font-size:12px;color:#a08060;">0/500</span></div>
+                <div class="form-group">
+                    <label>📷 图片（选填）</label>
+                    <div class="diary-images-area">
+                        <div id="diary-images-preview" class="diary-images-preview"></div>
+                        <label class="diary-image-add">
+                            <input type="file" id="diary-image-input" accept="image/*" multiple onchange="previewDiaryImages(event)">
+                            <span>+ 添加图片</span>
+                        </label>
+                    </div>
+                    <div id="diary-image-msg" class="form-hint"></div>
+                </div>
+                <button type="button" class="btn btn-primary" id="diary-save-btn" onclick="saveDiary()">保存并同步</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', function(e) {
+            const modal = e.target.closest('.modal');
+            if (modal) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        const CONSTANTS = {
+            STORAGE_KEY: 'pet-record-v3',
+            DB_NAME: 'petdiary_imgs',
+            DB_VERSION: 1,
+            MAX_IMAGES: 4,
+            MAX_CONTENT_LENGTH: 500,
+            COLORS: ['#ff6b6b', '#feca57', '#48dbfb', '#1dd1a1', '#5f27cd', '#ff9ff3', '#54a0ff'],
+            RECORD_TYPES: ['vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight', 'diary', 'expense'],
+            TYPE_LABELS: {
+                vaccine: '💉 疫苗',
+                deworm: '💊 驱虫',
+                groom: '🛁 洗护',
+                food: '🍚 饮食',
+                medical: '📋 病例',
+                neuter: '🏥 绝育',
+                weight: '⚖️ 体重',
+                diary: '📝 日记',
+                expense: '💰 记账'
+            },
+            TYPE_TITLES: {
+                vaccine: '疫苗',
+                deworm: '驱虫',
+                groom: '洗护',
+                food: '饮食',
+                medical: '病例',
+                neuter: '绝育',
+                diary: ''
+            },
+            EDIT_TITLES: {
+                vaccine: '编辑疫苗',
+                deworm: '编辑驱虫',
+                groom: '编辑洗护',
+                food: '编辑饮食',
+                medical: '编辑病例',
+                neuter: '编辑绝育',
+                weight: '编辑体重',
+                expense: '编辑记账'
+            },
+            ADD_TITLES: {
+                vaccine: '添加疫苗',
+                deworm: '添加驱虫',
+                groom: '添加洗护',
+                food: '记录饮食',
+                medical: '添加病例',
+                neuter: '记录绝育',
+                weight: '记录体重',
+                expense: '记一笔账'
+            },
+            FIELD_LABELS: {
+                vaccine: '疫苗名称',
+                deworm: '驱虫药品',
+                groom: '项目',
+                food: '食物',
+                medical: '病情',
+                neuter: '医院',
+                weight: '体重(kg)',
+                expense: '金额(元)'
+            },
+            EMPTY_MESSAGES: {
+                diary: '📭 还没有日记记录\n点击右上角按钮开始记录',
+                vaccine: '💉 还没有疫苗记录\n记得按时带毛孩子打疫苗哦',
+                deworm: '💊 还没有驱虫记录\n定期驱虫很重要',
+                weight: '⚖️ 还没有体重记录\n记录体重变化关注健康',
+                groom: '🛁 还没有洗护记录',
+                food: '🍚 还没有饮食记录',
+                medical: '📋 还没有病例记录',
+                neuter: '🏥 还没有绝育记录',
+                expense: '💰 暂无记账记录（选择记录类型时填写金额即可计入）'
+            }
+        };
+
+        // XSS防护：HTML转义函数
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // 输入验证函数
+        const Validator = {
+            isEmpty: (val) => !val || val.trim() === '',
+            
+            isValidName: (name) => {
+                if (!name || name.trim() === '') return { valid: false, message: '名称不能为空' };
+                if (name.length > 50) return { valid: false, message: '名称不能超过50个字符' };
+                if (/[<>\"\'\\]/.test(name)) return { valid: false, message: '名称包含非法字符' };
+                return { valid: true, message: '' };
+            },
+            
+            isValidAmount: (amount) => {
+                if (!amount || amount.trim() === '') return { valid: true, message: '' };
+                const num = parseFloat(amount);
+                if (isNaN(num)) return { valid: false, message: '金额必须是数字' };
+                if (num < 0) return { valid: false, message: '金额不能为负数' };
+                if (num > 9999999) return { valid: false, message: '金额过大' };
+                return { valid: true, message: '' };
+            },
+            
+            isValidWeight: (weight) => {
+                if (!weight || weight.trim() === '') return { valid: false, message: '体重不能为空' };
+                const num = parseFloat(weight);
+                if (isNaN(num)) return { valid: false, message: '体重必须是数字' };
+                if (num <= 0) return { valid: false, message: '体重必须大于0' };
+                if (num > 999) return { valid: false, message: '体重异常，请检查' };
+                return { valid: true, message: '' };
+            },
+            
+            isValidDate: (date) => {
+                if (!date) return { valid: false, message: '日期不能为空' };
+                const d = new Date(date);
+                if (isNaN(d.getTime())) return { valid: false, message: '日期格式无效' };
+                return { valid: true, message: '' };
+            },
+            
+            sanitizeInput: (str) => {
+                if (!str) return '';
+                // 移除潜在的XSS攻击代码
+                return str.replace(/<script[^>]*>.*?<\/script>/gi, '')
+                          .replace(/<[^>]*>/g, '')
+                          .trim();
+            }
+        };
+
+        const App = {
+            data: {
+                pets: [],
+                records: {
+                    vaccine: [],
+                    deworm: [],
+                    groom: [],
+                    food: [],
+                    medical: [],
+                    neuter: [],
+                    weight: [],
+                    diary: [],
+                    expense: []
+                }
+            },
+            tabs: {
+                active: 'pets',
+                settings: JSON.parse(localStorage.getItem('pet-record-tabs') || '{}')
+            },
+            images: {
+                db: null,
+                cache: {}
+            },
+            chart: {
+                weightInstance: null
+            },
+            state: {
+                currentDiaryId: null,
+                currentRecordType: null,
+                currentRecordIdx: null,
+                editingRecord: null
+            }
+        };
+
+        function loadData() {
+            const saved = localStorage.getItem(CONSTANTS.STORAGE_KEY);
+            if (saved) {
+                try {
+                    App.data = JSON.parse(saved);
+                } catch (e) {
+                    console.error('数据解析失败:', e);
+                    showToast('数据加载异常，将使用空数据', 'error');
+                }
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(CONSTANTS.STORAGE_KEY, JSON.stringify(App.data));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                    showToast('存储空间已满！请到「设置」中导出数据备份，然后清理部分日记图片。', 'error');
+                } else {
+                    showToast('保存失败：' + e.message, 'error');
+                }
+                throw e;
+            }
+        }
+
+        function exportData() {
+            const exportData = {
+                version: 'v1.0',
+                exportTime: new Date().toISOString(),
+                pets: App.data.pets,
+                records: App.data.records
+            };
+            const json = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '土豆拾光宠物数据_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const imported = JSON.parse(text);
+                    if (!imported.pets || !Array.isArray(imported.pets)) imported.pets = [];
+                    if (!imported.records || typeof imported.records !== 'object') imported.records = {};
+                    
+                    CONSTANTS.RECORD_TYPES.forEach(t => {
+                        if (!Array.isArray(imported.records[t])) imported.records[t] = [];
+                    });
+                    
+                    if (confirm('导入将覆盖现有所有数据，确定要继续吗？')) {
+                        App.data.pets = imported.pets || [];
+                        App.data.records = imported.records || {};
+                        saveData();
+                        loadData();
+                        renderAll();
+                        showToast('导入成功!');
+                    }
+                } catch (err) {
+                    console.error('导入错误:', err);
+                    showToast('导入失败: ' + err.message, 'error');
+                }
+            };
+            reader.onerror = function() { showToast('文件读取失败', 'error'); };
+            reader.readAsText(file);
+        }
+
+        function showToast(msg, type = 'success') {
+            let t = document.getElementById('toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'toast';
+                t.style.cssText = 'position:fixed;top:20%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;z-index:99999;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 2500);
+        }
+
+        function formatDate(d) {
+            if (!d) return '';
+            return d.split('T')[0];
+        }
+
+        function formatDateTime(d) {
+            if (!d) return '';
+            const t = new Date(d);
+            return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function calcAge(birth) {
+            if (!birth) return '未知';
+            const a = new Date(birth);
+            const n = new Date();
+            const y = n.getFullYear() - a.getFullYear();
+            const m = n.getMonth() - a.getMonth();
+            if (y > 0) return `${y}岁${m > 0 ? m + '个月' : ''}`;
+            return `${y * 12 + m}个月`;
+        }
+
+        // 初始化
+        loadData();
+        initTabs();
+        renderAll();
+        
+        // 隐藏加载动画
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => { loader.style.display = 'none'; }, 300);
+            }
+            document.body.classList.add('loaded');
+        }, 500);
+
+        function initTabs() {
+            const optionalTabs = ['groom', 'weight', 'expense', 'food', 'deworm', 'vaccine', 'neuter', 'medical'];
+            const tabNames = {vaccine:'疫苗',deworm:'驱虫',groom:'洗护',food:'饮食',medical:'病例',neuter:'绝育',weight:'体重',expense:'记账'};
+            const tabEmojis = {vaccine:'💉',deworm:'💊',groom:'🛁',food:'🍚',medical:'📋',neuter:'🏥',weight:'⚖️',expense:'💰'};
+
+            renderSettingsToggles();
+
+            // 应用tab显示/隐藏
+            optionalTabs.forEach(t => {
+                const el = document.querySelector(`.tab[onclick="switchTab('${t}')"]`);
+                if (el) el.style.display = (App.tabs.settings[t] === false) ? 'none' : '';
+            });
+        }
+
+        function toggleTab(tab, show) {
+            App.tabs.settings[tab] = show;
+            localStorage.setItem('pet-record-tabs', JSON.stringify(App.tabs.settings));
+            const el = document.querySelector(`.tab[onclick="switchTab('${tab}')"]`);
+            if (el) el.style.display = show ? '' : 'none';
+        }
+
+        function renderSettingsToggles() {
+            const optionalTabs = ['groom', 'weight', 'expense', 'food', 'deworm', 'vaccine', 'neuter', 'medical'];
+            const tabNames = {vaccine:'疫苗',deworm:'驱虫',groom:'洗护',food:'饮食',medical:'病例',neuter:'绝育',weight:'体重',expense:'记账'};
+            const tabEmojis = {vaccine:'💉',deworm:'💊',groom:'🛁',food:'🍚',medical:'📋',neuter:'🏥',weight:'⚖️',expense:'💰'};
+            let html = '';
+            optionalTabs.forEach(t => {
+                const checked = App.tabs.settings[t] !== false;
+                html += `<div class="settings-toggle"><span>${tabEmojis[t]} ${tabNames[t]}</span> <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleTab('${t}', this.checked)"></div>`;
+            });
+            document.getElementById('settings-tab-toggles').innerHTML = html;
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+
+            if (tab === 'settings') {
+                document.getElementById('settings-page').classList.add('active');
+                renderSettingsToggles();
+                return;
+            }
+
+            const tabBtn = document.querySelector(`.tab[onclick="switchTab('${tab}')"]`);
+            if (tabBtn) tabBtn.classList.add('active');
+            document.getElementById(tab + '-panel').classList.add('active');
+
+            if (tab === 'weight') renderWeight();
+            else if (tab === 'expense') renderExpense();
+            else if (tab === 'diary') renderList('diary');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-page').classList.remove('active');
+            switchTab('pets');
+        }
+
+        function renderAll() {
+            renderPets();
+            updateSelectors();
+            ['vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight', 'diary'].forEach(renderList);
+            renderExpense();
+        }
+
+        function updateSelectors() {
+            const opts = App.data.pets.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+            const all = '<option value="all">全部宠物</option>' + opts;
+
+            ['diary', 'vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight', 'expense'].forEach(t => {
+                const f = document.getElementById(t + '-filter');
+                if (f) f.innerHTML = all;
+                const p = document.getElementById(t + '-pet');
+                if (p) p.innerHTML = opts || '<option>请先添加宠物</option>';
+            });
+            // 通用记录表单的宠物下拉
+            const rp = document.getElementById('record-pet');
+            if (rp) rp.innerHTML = opts || '<option>请先添加宠物</option>';
+            const dp = document.getElementById('diary-pet');
+            if (dp) dp.innerHTML = opts || '<option>请先添加宠物</option>';
+        }
+
+        // 宠物相关
+        function renderPets() {
+            const container = document.getElementById('pet-cards');
+            if (!App.data.pets.length) {
+                container.innerHTML = '<div class="empty">还没有添加宠物\n前往设置页面添加 →</div>';
+                return;
+            }
+
+            container.innerHTML = App.data.pets.map((pet, idx) => {
+                const latestWeight = (App.data.records.weight || []).filter(w => w.petName === pet.name).sort((a, b) => new Date(b.datetime || b.date || 0) - new Date(a.datetime || a.date || 0))[0];
+                const vaccineCount = (App.data.records.vaccine || []).filter(w => w.petName === pet.name).length;
+                const neuterDone = (App.data.records.neuter || []).filter(w => w.petName === pet.name).length;
+                const colorIdx = idx % CONSTANTS.COLORS.length;
+                const color = CONSTANTS.COLORS[colorIdx];
+                const genderHtml = pet.gender === 'male' ? '<span class="gender-icon" style="color:#54a0ff">♂</span>' : pet.gender === 'female' ? '<span class="gender-icon" style="color:#ff6b9d">♀</span>' : '';
+
+                // 陪伴天数
+                let companionHtml = '';
+                if (pet.arrivedate) {
+                    const arrived = new Date(pet.arrivedate);
+                    const now = new Date();
+                    now.setHours(0,0,0,0); arrived.setHours(0,0,0,0);
+                    const days = Math.floor((now - arrived) / 86400000);
+                    if (days >= 0) {
+                        const dayText = days === 0 ? '今天' : days === 1 ? '1天' : days + '天';
+                        companionHtml = `<div class="companion">陪伴你 ${dayText} 了 💕</div>`;
+                    }
+                }
+
+                return `<div class="pet-card" onclick="openPetDetail(${idx})">
+                    <div class="pet-header">
+                        <div class="avatar">${pet.avatar ? `<img src="${pet.avatar}">` : '🐱'}</div>
+                        <div>
+                            <div class="pet-name">${pet.name} ${genderHtml}</div>
+                            <div class="pet-breed">${pet.breed || (pet.type === 'cat' ? '猫' : pet.type === 'dog' ? '狗' : '其他')}</div>
+                        </div>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item"><label>年龄</label><div>${calcAge(pet.birth)}</div></div>
+                        <div class="info-item"><label>体重</label><div>${latestWeight ? latestWeight.value + ' kg' : '未记录'}</div></div>
+                        <div class="info-item"><label>疫苗</label><div>${vaccineCount > 0 ? vaccineCount + '针' : '未打'}</div></div>
+                        <div class="info-item"><label>绝育</label><div>${neuterDone ? '已绝育' : '未绝育'}</div></div>
+                        <div class="info-item"><label>出生日期</label><div>${pet.birth || '未记录'}</div></div>
+                        <div class="info-item"><label>到家日期</label><div>${pet.arrivedate || '未记录'}</div></div>
+                    </div>
+                    ${companionHtml}
+                </div>`;
+            }).join('');
+        }
+
+        function showAddPetModal() {
+            document.getElementById('pet-modal-title').textContent = '添加宠物';
+            document.getElementById('pet-form').reset();
+            document.getElementById('pet-id').value = '';
+            document.getElementById('pet-birth').value = '';
+            document.getElementById('pet-arrivedate').value = '';
+            document.getElementById('avatar-preview').innerHTML = '🐱';
+            showModal('pet-modal');
+        }
+
+        let currentPetIdx = -1;
+
+        function openPetDetail(idx) {
+            currentPetIdx = idx;
+            const pet = App.data.pets[idx];
+            if (!pet) return;
+
+            document.getElementById('pet-detail-avatar').innerHTML = pet.avatar ? `<img src="${pet.avatar}">` : '🐱';
+            document.getElementById('pet-detail-name').textContent = pet.name;
+            
+            const breed = pet.breed || (pet.type === 'cat' ? '猫' : pet.type === 'dog' ? '狗' : '其他');
+            document.getElementById('pet-detail-breed').textContent = breed;
+
+            const genderText = pet.gender === 'male' ? '公 ♂' : pet.gender === 'female' ? '母 ♀' : '未知';
+            document.getElementById('pet-detail-gender').textContent = genderText;
+            
+            document.getElementById('pet-detail-age').textContent = calcAge(pet.birth);
+            
+            const latestWeight = (App.data.records.weight || []).filter(w => w.petName === pet.name).sort((a, b) => new Date(b.datetime || b.date || 0) - new Date(a.datetime || a.date || 0))[0];
+            document.getElementById('pet-detail-weight').textContent = latestWeight ? latestWeight.value + ' kg' : '未记录';
+
+            const vaccineCount = (App.data.records.vaccine || []).filter(w => w.petName === pet.name).length;
+            document.getElementById('pet-detail-vaccine').textContent = vaccineCount > 0 ? vaccineCount + ' 针' : '未打';
+
+            const neuterDone = (App.data.records.neuter || []).filter(w => w.petName === pet.name).length;
+            document.getElementById('pet-detail-neuter').textContent = neuterDone ? '已绝育' : '未绝育';
+
+            if (pet.arrivedate) {
+                const arrived = new Date(pet.arrivedate);
+                const now = new Date();
+                now.setHours(0,0,0,0);
+                arrived.setHours(0,0,0,0);
+                const days = Math.floor((now - arrived) / 86400000);
+                const dayText = days === 0 ? '今天' : days === 1 ? '1天' : days + '天';
+                document.getElementById('pet-detail-companion').textContent = dayText;
+            } else {
+                document.getElementById('pet-detail-companion').textContent = '未记录';
+            }
+
+            document.getElementById('pet-detail-birth').textContent = pet.birth || '未记录';
+            document.getElementById('pet-detail-arrivedate').textContent = pet.arrivedate || '未记录';
+
+            document.getElementById('pet-detail-modal').classList.add('show');
+            document.getElementById('pet-detail-modal').style.display = 'flex';
+        }
+
+        function closePetDetail() {
+            document.getElementById('pet-detail-modal').classList.remove('show');
+            document.getElementById('pet-detail-modal').style.display = 'none';
+            currentPetIdx = -1;
+        }
+
+        document.getElementById('pet-detail-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePetDetail();
+            }
+        });
+
+        function editPetFromDetail() {
+            if (currentPetIdx >= 0) {
+                editPet(currentPetIdx);
+            }
+        }
+
+        function deletePetFromDetail() {
+            if (currentPetIdx >= 0 && confirm('确定删除这只宠物吗?相关记录也会被删除。')) {
+                closePetDetail();
+                setTimeout(() => {
+                    deletePet(currentPetIdx);
+                }, 50);
+            }
+        }
+
+        function editPet(idx) {
+            const pet = App.data.pets[idx];
+            document.getElementById('pet-modal-title').textContent = '编辑宠物';
+            document.getElementById('pet-id').value = idx;
+            document.getElementById('pet-name').value = pet.name;
+            document.getElementById('pet-gender').value = pet.gender || 'unknown';
+            document.getElementById('pet-breed').value = pet.breed || '';
+            document.getElementById('pet-type').value = pet.type;
+            document.getElementById('pet-birth').value = pet.birth || '';
+            document.getElementById('pet-arrivedate').value = pet.arrivedate || '';
+            document.getElementById('avatar-preview').innerHTML = pet.avatar ? `<img src="${pet.avatar}">` : '🐱';
+            showModal('pet-modal');
+        }
+
+        function savePet() {
+            const avatarImg = document.getElementById('avatar-preview').querySelector('img');
+            
+            // 输入验证和XSS防护
+            const name = Validator.sanitizeInput(document.getElementById('pet-name').value);
+            const breed = Validator.sanitizeInput(document.getElementById('pet-breed').value);
+            
+            // 验证宠物名称
+            const nameValid = Validator.isValidName(name);
+            if (!nameValid.valid) {
+                showToast(nameValid.message, 'error');
+                return;
+            }
+
+            const pet = {
+                name: name,
+                gender: document.getElementById('pet-gender').value,
+                breed: breed,
+                type: document.getElementById('pet-type').value,
+                birth: document.getElementById('pet-birth').value,
+                arrivedate: document.getElementById('pet-arrivedate').value,
+                avatar: avatarImg ? avatarImg.src : ''
+            };
+
+            const id = document.getElementById('pet-id').value;
+            const isEdit = id !== '';
+            if (isEdit) {
+                App.data.pets[parseInt(id)] = pet;
+            } else {
+                App.data.pets.push(pet);
+            }
+
+            try {
+                saveData();
+            } catch (e) {
+                showToast('保存失败,头像图片太大,请换一张小点的图片', 'error');
+                App.data.pets.splice(isEdit ? parseInt(id) : App.data.pets.length - 1, 1);
+                return;
+            }
+            renderAll();
+            closeModal('pet-modal');
+            
+            if (!isEdit) {
+                document.getElementById('pet-detail-modal').style.display = 'none';
+                document.getElementById('pet-detail-modal').classList.remove('show');
+            } else if (currentPetIdx >= 0) {
+                setTimeout(() => {
+                    openPetDetail(currentPetIdx);
+                }, 50);
+            }
+        }
+
+        function deletePet(idx) {
+            if (!confirm('确定删除这只宠物吗?相关记录也会被删除。')) return;
+
+            const petName = App.data.pets[idx].name;
+            Object.keys(App.data.records).forEach(k => {
+                App.data.records[k] = App.data.records[k].filter(r => r.petName !== petName);
+            });
+            App.data.pets.splice(idx, 1);
+            saveData();
+            renderAll();
+        }
+
+        function previewAvatar(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = x => {
+                    // 压缩图片避免localStorage超限
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const max = 200;
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > max) { h = h * max / w; w = max; } }
+                        else { if (h > max) { w = w * max / h; h = max; } }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                        document.getElementById('avatar-preview').innerHTML = `<img src="${compressed}">`;
+                    };
+                    img.src = x.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateContentLength() {
+            const content = document.getElementById('diary-content');
+            const lengthEl = document.getElementById('diary-content-length');
+            if (content && lengthEl) {
+                lengthEl.textContent = content.value.length + '/' + CONSTANTS.MAX_CONTENT_LENGTH;
+                lengthEl.style.color = content.value.length > 450 ? '#e74c3c' : '#a08060';
+            }
+        }
+
+        async function openImgDB() {
+            return new Promise((resolve, reject) => {
+                if (App.images.db) { resolve(App.images.db); return; }
+                const req = indexedDB.open(CONSTANTS.DB_NAME, CONSTANTS.DB_VERSION);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('imgs')) db.createObjectStore('imgs', { keyPath: 'uuid' });
+                };
+                req.onsuccess = e => { App.images.db = e.target.result; resolve(App.images.db); };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function imgPut(uuid, blob) {
+            const db = await openImgDB();
+            return new Promise((res, rej) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    const tx = db.transaction('imgs', 'readwrite');
+                    tx.objectStore('imgs').put({uuid, data: base64});
+                    tx.oncomplete = () => { res(); };
+                    tx.onerror = () => rej(tx.error);
+                };
+                reader.onerror = () => rej(reader.error);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function imgGet(uuid) {
+            const db = await openImgDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction('imgs', 'readonly');
+                const req = tx.objectStore('imgs').get(uuid);
+                req.onsuccess = () => {
+                    if (!req.result || !req.result.data) {
+                        console.warn('图片数据不存在:', uuid);
+                        res(null);
+                        return;
+                    }
+                    const base64 = req.result.data;
+                    const byteString = atob(base64);
+                    const mimeType = 'image/jpeg';
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    const blob = new Blob([ab], {type: mimeType});
+                    res(blob);
+                };
+                req.onerror = () => rej(req.error);
+            });
+        }
+
+        async function imgDel(uuid) {
+            const db = await openImgDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction('imgs', 'readwrite');
+                tx.objectStore('imgs').delete(uuid);
+                tx.oncomplete = () => res();
+                tx.onerror = () => rej(tx.error);
+            });
+        }
+
+        function uuid4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+        }
+
+        async function getImgUrl(uuid) {
+            if (App.images.cache[uuid]) return App.images.cache[uuid];
+            try {
+                const blob = await imgGet(uuid);
+                if (!blob) {
+                    console.warn('图片不存在:', uuid);
+                    return null;
+                }
+                const url = URL.createObjectURL(blob);
+                App.images.cache[uuid] = url;
+                return url;
+            } catch (e) {
+                console.error('获取图片失败:', uuid, e);
+                return null;
+            }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            Object.values(App.images.cache).forEach(u => URL.revokeObjectURL(u));
+        });
+
+        function getPetById(petId) {
+            return App.data.pets.find(p => p.id == petId);
+        }
+
+        window.openDiaryDetail = async function(recordId, recordType = 'diary', recordIdx = -1) {
+            App.state.currentDiaryId = recordId;
+            App.state.currentRecordType = recordType;
+            App.state.currentRecordIdx = recordIdx;
+
+            let diary = App.data.records.diary.find(d => d.id === recordId);
+            let sourceRecord = diary;
+
+            if (!diary && recordType !== 'diary') {
+                const sourceRecords = App.data.records[recordType] || [];
+                const idx = sourceRecords.findIndex(r => r.id === recordId);
+                if (idx >= 0) {
+                    sourceRecord = sourceRecords[idx];
+                }
+            }
+
+            if (!sourceRecord) return;
+
+            const pet = App.data.pets.find(p => p.name === sourceRecord.petName);
+            const colorIdx = pet ? App.data.pets.indexOf(pet) % CONSTANTS.COLORS.length : 0;
+            const color = CONSTANTS.COLORS[colorIdx];
+
+            const petAvatarEl = document.getElementById('detail-pet-avatar');
+            petAvatarEl.src = pet && pet.avatar ? pet.avatar : 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23a08060" stroke-width="1.5"%3E%3Cpath d="M20 7h-9a4 4 0 0 0-4 4v1a3 3 0 0 0 3 3h1a7 7 0 0 0 7-7v-1a4 4 0 0 0-4-4z"/%3E%3Ccircle cx="12" cy="14" r="3"/%3E%3C/svg%3E';
+
+            const petTagEl = document.getElementById('detail-pet-tag');
+            petTagEl.textContent = sourceRecord.petName;
+            petTagEl.style.background = color + '20';
+            petTagEl.style.color = color;
+
+            const effectiveType = diary ? diary.type : recordType;
+            const typeLabel = CONSTANTS.TYPE_LABELS[effectiveType] || '📝 日记';
+            
+            const typeTagEl = document.getElementById('detail-type-tag');
+            typeTagEl.textContent = typeLabel;
+            typeTagEl.style.display = 'inline-block';
+            
+            document.getElementById('detail-date').textContent = sourceRecord.datetime ? formatDateTime(sourceRecord.datetime) : (sourceRecord.date || '');
+            
+            const content = diary ? diary.content : (sourceRecord.note || '');
+            document.getElementById('detail-content').textContent = content;
+
+            const detailEl = document.getElementById('detail-detail');
+            let detail = '';
+            if (diary) {
+                detail = diary.detail;
+            } else if (recordType === 'weight') {
+                detail = sourceRecord.value + ' kg';
+            } else {
+                detail = sourceRecord.detail;
+            }
+            if (detail) {
+                detailEl.textContent = detail;
+                detailEl.style.display = 'block';
+            } else {
+                detailEl.style.display = 'none';
+            }
+
+            const amountEl = document.getElementById('detail-amount');
+            if (sourceRecord.amount) {
+                amountEl.textContent = sourceRecord.amount + ' 元';
+                amountEl.style.display = 'flex';
+            } else {
+                amountEl.style.display = 'none';
+            }
+
+            const imagesContainer = document.getElementById('detail-images');
+            imagesContainer.innerHTML = '';
+
+            if (diary && diary.images && diary.images.length > 0) {
+                const urls = [];
+                for (const uuid of diary.images) {
+                    const url = await getImgUrl(uuid);
+                    urls.push(url || '');
+                    if (url) {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.onclick = () => showImgLightbox(urls.filter(u => u), diary.images.indexOf(uuid));
+                        imagesContainer.appendChild(img);
+                    }
+                }
+            }
+
+            document.getElementById('diary-detail-modal').style.display = 'block';
+        }
+
+        window.closeDiaryDetail = function() {
+            document.getElementById('diary-detail-modal').style.display = 'none';
+            App.state.currentDiaryId = null;
+        }
+
+        function getDiaryIndexById(diaryId) {
+            return App.data.records.diary.findIndex(d => d.id === diaryId);
+        }
+
+        window.editDiaryFromDetail = function() {
+            if (App.state.currentRecordType === 'diary') {
+                const idx = getDiaryIndexById(App.state.currentDiaryId);
+                if (idx >= 0) {
+                    editRecord('diary', idx);
+                }
+            } else if (App.state.currentRecordType && App.state.currentRecordIdx >= 0) {
+                editRecord(App.state.currentRecordType, App.state.currentRecordIdx);
+            }
+        }
+
+        window.deleteDiaryFromDetail = function() {
+            const typeNames = {diary:'日记',vaccine:'疫苗',deworm:'驱虫',groom:'洗护',food:'饮食',medical:'病例',neuter:'绝育',weight:'体重',expense:'记账'};
+            
+            if (App.state.currentRecordType === 'diary') {
+                const idx = getDiaryIndexById(App.state.currentDiaryId);
+                if (idx >= 0 && confirm('确定要删除这篇日记吗？')) {
+                    closeDiaryDetail();
+                    setTimeout(() => {
+                        deleteRecord('diary', idx, true);
+                    }, 50);
+                }
+            } else if (App.state.currentRecordType && App.state.currentRecordIdx >= 0) {
+                const typeName = typeNames[App.state.currentRecordType] || '记录';
+                if (confirm(`确定要删除这条${typeName}记录吗？`)) {
+                    closeDiaryDetail();
+                    setTimeout(() => {
+                        deleteRecord(App.state.currentRecordType, App.state.currentRecordIdx, true);
+                    }, 50);
+                }
+            }
+        }
+
+        // ============= 日记图片相关 =============
+        let diaryImageFiles = [];  // ⚠️ 改后：待保存的新图片 UUID 列表（string[]）
+        let diaryImageData = [];   // ⚠️ 改后：编辑时回填的已有图片 UUID 列表（string[]）
+
+        // 图片压缩并添加（最多4张）
+        async function previewDiaryImages(e) {
+            const msgEl = document.getElementById('diary-image-msg');
+            msgEl.textContent = '';
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            const totalImages = diaryImageFiles.length + diaryImageData.length;
+            if (totalImages >= 4) {
+                msgEl.textContent = '⚠️ 最多只能上传4张图片';
+                return;
+            }
+            
+            for (const file of files) {
+                if (diaryImageFiles.length + diaryImageData.length >= 4) {
+                    msgEl.textContent = '⚠️ 最多只能上传4张图片';
+                    break;
+                }
+                const reader = new FileReader();
+                await new Promise((resolve) => {
+                    reader.onload = x => {
+                        const img = new Image();
+                        img.onload = async () => {
+                            const canvas = document.createElement('canvas');
+                            const max = 800;
+                            let w = img.width, h = img.height;
+                            if (w > h) { if (w > max) { h = h * max / w; w = max; } }
+                            else { if (h > max) { w = w * max / h; h = max; } }
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            canvas.toBlob(async blob => {
+                                if (!blob) { resolve(); return; }
+                                const uuid = uuid4();
+                                await imgPut(uuid, blob);
+                                diaryImageFiles.push(uuid);
+                                await renderDiaryImageThumbs();
+                                resolve();
+                            }, 'image/jpeg', 0.7);
+                        };
+                        img.src = x.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            e.target.value = '';
+        }
+
+        // 渲染缩略图
+        async function renderDiaryImageThumbs() {
+            const container = document.getElementById('diary-images-preview');
+            const allUuids = [...diaryImageData, ...diaryImageFiles];
+            if (!allUuids.length) { container.innerHTML = ''; return; }
+            const results = await Promise.all(allUuids.map(uuid => getImgUrl(uuid)));
+            let html = '';
+            results.forEach((url, i) => {
+                if (!url) return;
+                const isNew = i >= diaryImageData.length;
+                html += `<div class="diary-img-thumb">
+                    <img src="${url}" onclick="showImgLightbox('${allUuids[i]}')">
+                    <button class="img-del" onclick="removeDiaryImage(${i}, ${isNew})">×</button>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // 删除图片
+        async function removeDiaryImage(i, isNew) {
+            if (isNew) {
+                const uuid = diaryImageFiles[i];
+                diaryImageFiles.splice(i, 1);
+                await imgDel(uuid);
+            } else {
+                diaryImageData.splice(i, 1);
+            }
+            renderDiaryImageThumbs();
+        }
+
+        // 轻量级图片预览弹窗（支持单张图片或图片数组）
+        async function showImgLightbox(images, index = 0) {
+            const urls = Array.isArray(images) ? images : [await getImgUrl(images)];
+            if (!urls.length || !urls[index]) return;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'img-lightbox';
+            
+            let navHtml = '';
+            if (urls.length > 1) {
+                navHtml = `
+                    <button class="lb-prev" onclick="navigateLightbox(-1)">‹</button>
+                    <button class="lb-next" onclick="navigateLightbox(1)">›</button>
+                    <span class="lb-counter">${index + 1} / ${urls.length}</span>
+                `;
+            }
+            
+            overlay.innerHTML = `
+                <img src="${urls[index]}">
+                <button class="lb-close" onclick="this.parentElement.remove()">×</button>
+                ${navHtml}
+            `;
+            
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+            document.body.appendChild(overlay);
+
+            window.navigateLightbox = function(direction) {
+                const newIndex = (index + direction + urls.length) % urls.length;
+                overlay.remove();
+                showImgLightbox(urls, newIndex);
+            };
+        }
+
+        // 打开日记弹窗时初始化图片区
+        function initDiaryImageArea() {
+            diaryImageFiles = [];
+            diaryImageData = [];
+            document.getElementById('diary-image-input').value = '';
+            document.getElementById('diary-images-preview').innerHTML = '';
+            document.getElementById('diary-image-msg').textContent = '';
+        }
+
+        // 通用记录
+        function showAddModal(type) {
+            if (!App.data.pets.length) {
+                showToast('请先添加宠物', 'error');
+                return;
+            }
+            updateSelectors();
+            App.state.editingRecord = null;
+
+            document.getElementById('record-type').value = type;
+            document.getElementById('record-modal-title').textContent = CONSTANTS.ADD_TITLES[type];
+            document.getElementById('record-form').reset();
+            document.getElementById('record-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('record-date').max = new Date().toISOString().split('T')[0];
+            document.getElementById('record-detail-label').textContent = CONSTANTS.FIELD_LABELS[type];
+
+            const detailGroup = document.getElementById('record-detail-group');
+            const detailInput = document.getElementById('record-detail');
+            const valueGroup = document.getElementById('record-amount-group');
+            
+            if (type === 'weight') {
+                detailGroup.style.display = '';
+                detailInput.type = 'number';
+                detailInput.step = '0.01';
+                valueGroup.style.display = 'none';
+            } else if (type === 'expense') {
+                detailGroup.style.display = '';
+                detailInput.type = 'text';
+                valueGroup.style.display = '';
+                document.getElementById('record-amount').value = '';
+            } else {
+                detailGroup.style.display = '';
+                detailInput.type = 'text';
+                valueGroup.style.display = ''; // 专门Tab显示花费字段
+            }
+
+            // 专门Tab隐藏备注输入框（只有日记Tab显示备注）
+            const noteGroup = document.getElementById('record-note-group');
+            noteGroup.style.display = 'none';
+
+            showModal('record-modal');
+        }
+
+        function saveRecord() {
+            const type = document.getElementById('record-type').value;
+            const petName = document.getElementById('record-pet').value;
+            const dateInput = document.getElementById('record-date').value;
+            const detail = Validator.sanitizeInput(document.getElementById('record-detail').value);
+            const note = Validator.sanitizeInput(document.getElementById('record-note').value);
+            const amount = document.getElementById('record-amount').value || '';
+
+            // 输入验证
+            if (!petName) { showToast('请选择宠物', 'error'); return; }
+            
+            const dateValid = Validator.isValidDate(dateInput);
+            if (!dateValid.valid) { showToast(dateValid.message, 'error'); return; }
+            
+            const amountValid = Validator.isValidAmount(amount);
+            if (!amountValid.valid) { showToast(amountValid.message, 'error'); return; }
+            
+            if (type === 'weight') {
+                const weightValid = Validator.isValidWeight(detail);
+                if (!weightValid.valid) { showToast(weightValid.message, 'error'); return; }
+            }
+
+            // 自动生成完整datetime（含时分秒毫秒），确保排序精确到毫秒
+            const ms = String(new Date().getMilliseconds()).padStart(3,'0');
+            const timeStr = new Date().toTimeString().slice(0,8) + '.' + ms;
+            const datetime = dateInput + 'T' + timeStr;
+
+            if (App.state.editingRecord && App.state.editingRecord.type === type) {
+                const r = App.data.records[type][App.state.editingRecord.idx];
+                if (r) {
+                    r.petName = petName;
+                    r.datetime = datetime;
+                    r.note = note;
+                    r.amount = amount;
+                    if (type === 'weight') {
+                        r.value = detail;
+                    } else {
+                        r.detail = detail;
+                    }
+                    if (r.linkId && App.data.records.diary) {
+                        const diaryIdx = App.data.records.diary.findIndex(d => d.linkId === r.linkId);
+                        if (diaryIdx >= 0) {
+                            const d = App.data.records.diary[diaryIdx];
+                            d.petName = petName;
+                            d.datetime = datetime;
+                            d.content = note;
+                            d.detail = type === 'weight' ? detail : detail;
+                            d.amount = amount;
+                        }
+                        renderList('diary');
+                    }
+                }
+                App.state.editingRecord = null;
+                saveData();
+                renderList(type);
+                renderPets();
+                if (type === 'weight') renderWeight();
+                if (type === 'expense') renderExpense();
+                closeModal('record-modal');
+                if (App.state.currentDiaryId) {
+                    setTimeout(() => {
+                        openDiaryDetail(App.state.currentDiaryId, type, App.state.currentRecordIdx);
+                    }, 50);
+                }
+                return;
+            }
+
+            if (type === 'weight') {
+                const todayRecords = App.data.records.weight.filter(r => r.petName === petName && (r.datetime || r.date).startsWith(dateInput));
+                if (todayRecords.length > 0) { showToast('今日已记录体重,请明天再记录', 'error'); return; }
+            }
+
+            const linkId = Date.now();
+            const record = { petName, datetime, note, id: linkId, linkId: linkId, amount: amount };
+            if (type === 'weight') {
+                record.value = detail;
+            } else {
+                record.detail = detail;
+            }
+
+            App.data.records[type].push(record);
+            
+            if (type !== 'diary' && type !== 'expense' && App.data.records.diary) {
+                const ms = String(new Date().getMilliseconds()).padStart(3, '0');
+                const datetime = dateInput + 'T' + new Date().toTimeString().slice(0, 8) + '.' + ms;
+                App.data.records.diary.push({
+                    petName: petName,
+                    datetime: datetime,
+                    content: note,
+                    type: type,
+                    detail: detail,
+                    id: linkId,
+                    linkId: linkId,
+                    amount: amount
+                });
+                renderList('diary');
+            }
+            
+            saveData();
+            renderList(type);
+            renderPets();
+            if (type === 'weight') renderWeight();
+            if (type === 'expense') renderExpense();
+            closeModal('record-modal');
+        }
+
+        function renderList(type) {
+            if (type === 'expense') { renderExpense(); return; }
+            const filter = document.getElementById(type + '-filter') ? document.getElementById(type + '-filter').value : 'all';
+            let records = App.data.records[type] || [];
+            if (!Array.isArray(records)) records = [];
+
+            if (filter !== 'all') {
+                records = records.filter(r => r.petName === filter);
+            }
+
+            const container = document.getElementById(type + '-list');
+            if (!records.length) {
+                container.innerHTML = `<div class="empty">${CONSTANTS.EMPTY_MESSAGES[type] || '暂无记录'}</div>`;
+                checkAlerts(type);
+                return;
+            }
+
+            records.sort((a, b) => {
+                const da = new Date(a.datetime || a.date || 0);
+                const db = new Date(b.datetime || b.date || 0);
+                return db - da;
+            });
+
+            const html = records.map(r => {
+                const petIdx = App.data.pets.findIndex(p => p.name === r.petName);
+                const color = CONSTANTS.COLORS[petIdx % CONSTANTS.COLORS.length];
+                const recordIdx = App.data.records[type].indexOf(r);
+
+                let title = r.detail || CONSTANTS.TYPE_TITLES[type] || '';
+                if (type === 'weight') title = r.value + ' kg';
+                else if (r.amount) title += `  💰 ${r.amount}元`;
+                if (type === 'diary') {
+                    const typeLabel = CONSTANTS.TYPE_LABELS[r.type] || '📝 日记';
+                    const detailPart = r.detail ? ` · ${r.detail}` : '';
+                    const contentPart = r.content ? r.content.substring(0, 30) + (r.content.length > 30 ? '...' : '') : '';
+                    title = `<span style="color:#a08060;font-size:12px">${typeLabel}${detailPart}</span>` + (contentPart ? `<br>${contentPart}` : '') + (r.amount ? ` 💰 ${r.amount}元` : '');
+                }
+
+                let dateStr = r.date || r.datetime || '';
+                if (r.datetime) dateStr = formatDateTime(r.datetime);
+                else if (r.date) dateStr = r.date;
+
+                let rightHtml = '';
+                if (type === 'diary') {
+                    rightHtml = r.images && r.images.length > 0 
+                        ? `<img class="img-thumb" src="" data-uuid="${r.images[0]}" alt="日记图片" />` 
+                        : '';
+                } else {
+                    const diaryImg = r.linkId ? App.data.records.diary.find(d => d.linkId === r.linkId) : null;
+                    const hasImage = diaryImg && diaryImg.images && diaryImg.images.length > 0 && diaryImg.images[0];
+                    
+                    if (hasImage) {
+                        rightHtml = `<img class="img-thumb" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f0e8e0'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E" data-uuid="${diaryImg.images[0]}" alt="图片" style="margin-right:8px;display:none;" />`;
+                    }
+                    rightHtml += `
+                        <button class="btn btn-secondary btn-small" style="font-size:11px;padding:4px 8px;" onclick="event.stopPropagation();editRecord('${type}', ${recordIdx})">编辑</button>
+                        <button class="btn btn-danger btn-small" style="font-size:11px;padding:4px 8px;" onclick="event.stopPropagation();deleteRecord('${type}', ${recordIdx})">删除</button>
+                    `;
+                }
+
+                const clickHandler = type === 'diary' ? `openDiaryDetail(${r.id})` : `openDiaryDetail(${r.id}, '${type}', ${recordIdx})`;
+                return `<div class="record-item" onclick="${clickHandler}">
+                    <div class="left">
+                        <span class="pet-tag" style="background:${color}20;color:${color}">${r.petName}</span>
+                        <div class="title">${title}</div>
+                        <div class="meta">${dateStr}</div>
+                    </div>
+                    <div class="right">${rightHtml}</div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = html;
+
+            records.forEach(r => {
+                let imgUuid = null;
+                let hasDiaryImage = false;
+                
+                if (type === 'diary' && r.images && r.images.length > 0) {
+                    imgUuid = r.images[0];
+                    hasDiaryImage = true;
+                } else if (type !== 'diary' && r.linkId) {
+                    const diaryImg = App.data.records.diary.find(d => d.linkId === r.linkId);
+                    if (diaryImg && diaryImg.images && diaryImg.images.length > 0) {
+                        imgUuid = diaryImg.images[0];
+                        hasDiaryImage = true;
+                    }
+                }
+                
+                if (hasDiaryImage && imgUuid) {
+                    (async () => {
+                        try {
+                            const url = await getImgUrl(imgUuid);
+                            if (url) {
+                                const imgs = document.querySelectorAll(`img[data-uuid="${imgUuid}"]`);
+                                imgs.forEach(img => {
+                                    img.src = url;
+                                    img.style.display = '';
+                                });
+                            } else {
+                                const imgs = document.querySelectorAll(`img[data-uuid="${imgUuid}"]`);
+                                imgs.forEach(img => img.style.display = 'none');
+                            }
+                        } catch (e) {
+                            console.error('图片加载失败:', imgUuid, e);
+                            const imgs = document.querySelectorAll(`img[data-uuid="${imgUuid}"]`);
+                            imgs.forEach(img => img.style.display = 'none');
+                        }
+                    })();
+                }
+            });
+
+            checkAlerts(type);
+        }
+
+        function checkAlerts(type) {
+            if (type !== 'deworm' && type !== 'groom') return;
+
+            const alert = document.getElementById(type + '-alert');
+            const alerts = [];
+
+            App.data.pets.forEach(pet => {
+                const petRecords = (App.data.records[type] || []).filter(r => r.petName === pet.name);
+                if (petRecords.length > 0) {
+                    const lastRecord = petRecords.sort((a, b) => new Date(b.datetime || b.date || 0) - new Date(a.datetime || a.date || 0))[0];
+                    const days = Math.floor((new Date() - new Date(lastRecord.date)) / (1000 * 60 * 60 * 24));
+                    if (days > 30) {
+                        alerts.push(`${pet.name}: ${days}天`);
+                    }
+                }
+            });
+
+            if (alerts.length > 0) {
+                alert.innerHTML = `<b>⚠️ ${type === 'deworm' ? '驱虫' : '洗护'}提醒</b>: ${alerts.join(', ')}`;
+                alert.style.display = '';
+            } else {
+                alert.style.display = 'none';
+            }
+        }
+
+        async function editRecord(type, idx) {
+            const r = App.data.records[type][idx];
+            if (!r) return;
+            App.state.editingRecord = { type, idx };
+
+            if (type === 'diary') {
+                updateSelectors();
+                document.getElementById('diary-pet').value = r.petName;
+                document.getElementById('diary-datetime').value = r.datetime || '';
+                document.getElementById('diary-type').value = r.type || 'diary';
+                document.getElementById('diary-content').value = r.content || '';
+                document.getElementById('diary-detail').value = r.detail || '';
+                document.getElementById('diary-amount').value = r.amount || '';
+                onDiaryTypeChange();
+                diaryImageData = r.images ? [...r.images] : [];
+                diaryImageFiles = [];
+                await renderDiaryImageThumbs();
+                document.querySelector('#diary-modal .modal-header h3').textContent = '编辑日记';
+                showModal('diary-modal');
+            } else {
+                updateSelectors();
+                document.getElementById('record-type').value = type;
+                document.getElementById('record-modal-title').textContent = CONSTANTS.EDIT_TITLES[type];
+                document.getElementById('record-pet').value = r.petName;
+                document.getElementById('record-date').value = r.date || r.datetime ? (r.date || r.datetime).substring(0, 10) : new Date().toISOString().substring(0, 10);
+                document.getElementById('record-detail').value = type === 'weight' ? (r.value || '') : (r.detail || '');
+                document.getElementById('record-note').value = r.note || '';
+                document.getElementById('record-detail-label').textContent = CONSTANTS.FIELD_LABELS[type];
+                const detailInput = document.getElementById('record-detail');
+                if (type === 'weight') { detailInput.type = 'number'; detailInput.step = '0.01'; }
+                else { detailInput.type = 'text'; }
+                document.getElementById('record-detail-group').style.display = '';
+                
+                const noteGroup = document.getElementById('record-note-group');
+                noteGroup.style.display = 'none';
+                
+                showModal('record-modal');
+                document.getElementById('record-amount').value = r.amount || '';
+            }
+        }
+
+        async function deleteRecord(type, idx, skipConfirm = false) {
+            const record = App.data.records[type][idx];
+            const petName = record?.petName || '';
+            const typeNames = {diary:'日记',vaccine:'疫苗',deworm:'驱虫',groom:'洗护',food:'饮食',medical:'病例',neuter:'绝育',weight:'体重',expense:'记账'};
+            const typeName = typeNames[type] || '记录';
+            if (!skipConfirm && !confirm(`确定要删除这条${typeName}记录吗？${petName ? '（宠物：' + petName + '）' : ''}`)) return;
+            
+            const linkId = record ? record.linkId : null;
+            const otherType = linkId ? (type === 'diary' ? record.type : 'diary') : null;
+            
+            App.data.records[type].splice(idx, 1);
+            
+            if (type === 'diary' && record.images) {
+                for (const uuid of record.images) {
+                    await imgDel(uuid);
+                    await new Promise(r => setTimeout(r, 0));
+                }
+            }
+            
+            if (linkId && otherType && App.data.records[otherType]) {
+                const otherIdx = App.data.records[otherType].findIndex(r => r.linkId === linkId);
+                if (otherIdx >= 0) {
+                    App.data.records[otherType].splice(otherIdx, 1);
+                    await new Promise(r => setTimeout(r, 0));
+                    renderList(otherType);
+                    if (otherType === 'weight') renderWeight();
+                }
+            }
+            
+            await new Promise(r => setTimeout(r, 0));
+            saveData();
+            
+            await new Promise(r => setTimeout(r, 0));
+            renderList(type);
+            
+            await new Promise(r => setTimeout(r, 0));
+            if (type === 'weight') renderWeight();
+            
+            await new Promise(r => setTimeout(r, 0));
+            if (document.getElementById('expense-panel') && document.getElementById('expense-panel').style.display !== 'none') {
+                renderExpense();
+            }
+        }
+
+        // 体重图表
+        function renderWeight() {
+            const filter = document.getElementById('weight-filter').value;
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            const container = document.getElementById('weight-list');
+
+            // 绘制图表
+            if (App.chart.weightInstance) {
+                App.chart.weightInstance.destroy();
+            }
+
+            const pets = filter === 'all' ? App.data.pets : App.data.pets.filter(p => p.name === filter);
+            const datasets = [];
+
+            pets.forEach((pet, idx) => {
+                const weights = (App.data.records.weight || []).filter(w => w.petName === pet.name).sort((a, b) => new Date(a.datetime || a.date || 0) - new Date(b.datetime || b.date || 0));
+                if (weights.length > 0) {
+                    datasets.push({
+                        label: pet.name,
+                        data: weights.map(w => ({ x: w.date, y: parseFloat(w.value) })),
+                        borderColor: CONSTANTS.COLORS[idx % CONSTANTS.COLORS.length],
+                        tension: 0.3,
+                        fill: false
+                    });
+                }
+            });
+
+            if (datasets.length > 0) {
+                App.chart.weightInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { type: 'category' },
+                            y: { beginAtZero: false }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+
+                document.getElementById('weight-legend').innerHTML = datasets.map(d =>
+                    `<div class="legend-item"><div class="legend-color" style="background:${d.borderColor}"></div><span>${d.label}</span></div>`
+                ).join('');
+            } else {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                document.getElementById('weight-legend').innerHTML = '';
+            }
+
+            // 渲染列表
+            renderList('weight');
+        }
+
+                function renderExpense() {
+            const filter = document.getElementById('expense-filter') ? document.getElementById('expense-filter').value : 'all';
+            const container = document.getElementById('expense-list');
+
+            const allWithAmount = [];
+            const types = ['diary', 'vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight'];
+            types.forEach(type => {
+                (App.data.records[type] || []).forEach((rec, idx) => {
+                    const amt = rec.amount;
+                    if (amt && amt !== '' && parseFloat(amt) > 0) {
+                        if (filter === 'all' || rec.petName === filter) {
+                            allWithAmount.push({ ...rec, _type: type, _idx: idx });
+                        }
+                    }
+                });
+            });
+
+            (App.data.records.expense || []).forEach((rec, idx) => {
+                if (filter === 'all' || rec.petName === filter) {
+                    allWithAmount.push({ ...rec, _type: 'expense', _idx: idx });
+                }
+            });
+
+            allWithAmount.sort((a, b) => {
+                const da = new Date(a.datetime || a.date || 0);
+                const db = new Date(b.datetime || b.date || 0);
+                return db - da;
+            });
+
+            // 用linkId去重，避免日记和专门Tab的同一条记录重复显示
+            const seen = new Set();
+            const uniqueExpenses = allWithAmount.filter(e => {
+                const key = e.linkId ? e.linkId : (e.petName + '|' + (e.date || e.datetime) + '|' + e.amount);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            const byMonth = {};
+            uniqueExpenses.forEach(e => {
+                const m = (e.date || e.datetime || '').substring(0, 7);
+                if (!m || m.length < 7) return;
+                if (!byMonth[m]) byMonth[m] = [];
+                byMonth[m].push(e);
+            });
+
+            if (uniqueExpenses.length === 0) {
+                container.innerHTML = `<div class="empty">${CONSTANTS.EMPTY_MESSAGES.expense}</div>`;
+                return;
+            }
+
+            let html = '';
+            Object.keys(byMonth).sort().reverse().forEach(month => {
+                const total = byMonth[month].reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+                html += '<div style="background:#fff5f5;border-radius:10px;padding:10px;margin-bottom:8px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                html += '<span style="color:#5a3e36;font-weight:500">' + month + '</span>';
+                html += '<span style="color:#ff6b6b;font-weight:bold">¥' + total.toFixed(2) + '</span></div>';
+                byMonth[month].forEach(e => {
+                    let effectiveType = e._type;
+                    if (e._type === 'diary' && e.type && CONSTANTS.TYPE_LABELS[e.type]) {
+                        effectiveType = e.type;
+                    }
+                    const label = CONSTANTS.TYPE_LABELS[effectiveType] || (effectiveType === 'expense' ? '💰 记账' : effectiveType);
+                    const amt = e.amount || '0';
+                    const detail = effectiveType === 'diary' ? e.content : (e.detail || e.note || label);
+                    const petIdx = App.data.pets.findIndex(p => p.name === e.petName);
+                    const color = CONSTANTS.COLORS[petIdx % CONSTANTS.COLORS.length];
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid #f0e0d0">';
+                    html += '<div><span style="background:' + color + '20;color:' + color + ';padding:1px 6px;border-radius:10px;font-size:11px;margin-right:5px">' + label + '</span><span style="color:#a08060;font-size:12px">' + e.petName + ' · ' + detail + '</span></div>';
+                    html += '<span style="color:#ff6b6b;font-weight:500">¥' + amt + '</span>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+function showAddDiaryModal(preType) {
+            if (!App.data.pets.length) { showToast('请先添加宠物', 'error'); return; }
+            updateSelectors();
+            App.state.editingRecord = null;
+            initDiaryImageArea();
+            document.getElementById('diary-form').reset();
+            document.querySelector('#diary-modal .modal-header h3').textContent = '写日记';
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('diary-datetime').value = now.toISOString().slice(0, 16);
+            document.getElementById('diary-datetime').max = now.toISOString().slice(0, 16);
+            document.getElementById('diary-datetime').step = 0;
+            if (preType) document.getElementById('diary-type').value = preType;
+            onDiaryTypeChange();
+            showModal('diary-modal');
+        }
+
+        function onDiaryTypeChange() {
+            const type = document.getElementById('diary-type').value;
+            const detailGroup = document.getElementById('diary-detail-group');
+            const detailInput = document.getElementById('diary-detail');
+            const amountGroup = document.getElementById('diary-amount-group');
+            const contentGroup = document.getElementById('diary-content-group');
+            const contentInput = document.getElementById('diary-content');
+            const labels = {vaccine:'疫苗名称',deworm:'驱虫药品',groom:'项目',food:'食物',medical:'病情',neuter:'医院',weight:'体重(kg)'};
+            
+            if (type === 'diary') {
+                // 纯日记：显示内容字段，隐藏花费字段
+                detailGroup.style.display = 'none';
+                amountGroup.style.display = 'none';
+                contentGroup.style.display = '';
+                contentInput.required = true;
+            } else if (type === 'weight') {
+                // 体重：显示详情（作为体重值），显示花费，隐藏内容
+                detailGroup.style.display = '';
+                amountGroup.style.display = '';
+                contentGroup.style.display = 'none';
+                contentInput.required = false;
+                detailInput.type = 'number';
+                detailInput.step = '0.01';
+                detailInput.placeholder = '如: 4.5';
+                document.getElementById('diary-detail-label').textContent = labels[type];
+            } else {
+                // 专门Tab：显示详情，显示花费，隐藏内容
+                detailGroup.style.display = '';
+                amountGroup.style.display = '';
+                contentGroup.style.display = 'none';
+                contentInput.required = false;
+                detailInput.type = 'text';
+                detailInput.placeholder = '';
+                document.getElementById('diary-detail-label').textContent = labels[type] || '详情';
+            }
+        }
+
+        function saveDiary() {
+            const petName = document.getElementById('diary-pet').value;
+            let datetime = document.getElementById('diary-datetime').value;
+            const type = document.getElementById('diary-type').value;
+            const content = Validator.sanitizeInput(document.getElementById('diary-content').value);
+            const detail = Validator.sanitizeInput(document.getElementById('diary-detail').value);
+            const amount = document.getElementById('diary-amount').value || '';
+
+            // 输入验证
+            if (!petName) { showToast('请选择宠物', 'error'); return; }
+            
+            if (!datetime) { showToast('请选择日期时间', 'error'); return; }
+            const date = datetime.split('T')[0];
+            const dateValid = Validator.isValidDate(date);
+            if (!dateValid.valid) { showToast(dateValid.message, 'error'); return; }
+            
+            const amountValid = Validator.isValidAmount(amount);
+            if (!amountValid.valid) { showToast(amountValid.message, 'error'); return; }
+            
+            if (type === 'weight') {
+                const weightValid = Validator.isValidWeight(detail);
+                if (!weightValid.valid) { showToast(weightValid.message, 'error'); return; }
+            }
+
+            // 补上秒和毫秒，确保同一分钟内的记录也能按创建顺序排对
+            if (datetime && !datetime.match(/:\d{2}\.\d{3}$/)) {
+                const now = new Date();
+                const ms = String(now.getMilliseconds()).padStart(3, '0');
+                const sec = String(now.getSeconds()).padStart(2, '0');
+                datetime = datetime + ':' + sec + '.' + ms;
+            }
+
+            if (App.state.editingRecord && App.state.editingRecord.type === 'diary') {
+                const r = App.data.records.diary[App.state.editingRecord.idx];
+                if (r) {
+                    r.petName = petName;
+                    r.datetime = datetime;
+                    r.content = content;
+                    r.type = type;
+                    r.detail = detail;
+                    r.amount = amount;
+                    
+                    const finalUuids = [...diaryImageData, ...diaryImageFiles];
+                    if (r.images) {
+                        r.images.forEach(oldUuid => {
+                            if (!finalUuids.includes(oldUuid)) imgDel(oldUuid);
+                        });
+                    }
+                    r.images = finalUuids;
+
+                    if (r.linkId && ['vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight'].includes(type)) {
+                        const targetType = type;
+                        const targetIdx = App.data.records[targetType]?.findIndex(rec => rec.linkId === r.linkId);
+                        if (targetIdx >= 0) {
+                            const targetRec = App.data.records[targetType][targetIdx];
+                            targetRec.petName = petName;
+                            targetRec.date = date;
+                            targetRec.datetime = datetime;
+                            targetRec.note = content;
+                            if (type === 'weight') {
+                                targetRec.value = r.detail;
+                            } else {
+                                targetRec.detail = r.detail;
+                            }
+                            targetRec.amount = r.amount;
+                            renderList(targetType);
+                        }
+                    }
+                }
+                App.state.editingRecord = null;
+                saveData();
+                renderList('diary');
+                renderPets();
+                if (type === 'weight') renderWeight();
+                closeModal('diary-modal');
+                if (App.state.currentDiaryId) {
+                    openDiaryDetail(App.state.currentDiaryId);
+                }
+                return;
+            }
+
+            const linkId = Date.now();
+            const allImages = [...diaryImageData, ...diaryImageFiles];
+            const diaryRecord = { petName, datetime, content, type, detail, id: linkId, linkId: linkId, amount, images: allImages };
+            App.data.records.diary.push(diaryRecord);
+            
+            if (['vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight'].includes(type)) {
+                const targetType = type;
+                if (!App.data.records[targetType]) App.data.records[targetType] = [];
+                const record = {
+                    petName: petName,
+                    date: date,
+                    datetime: datetime,
+                    note: content,
+                    id: linkId,
+                    linkId: linkId,
+                    amount: amount
+                };
+                if (type === 'weight') {
+                    record.value = detail;
+                } else {
+                    record.detail = detail;
+                }
+                App.data.records[targetType].push(record);
+                renderList(targetType);
+            }
+            
+            saveData();
+            renderList('diary');
+            renderPets();
+            if (type === 'weight') renderWeight();
+            initDiaryImageArea();
+            closeModal('diary-modal');
+        }
+
+        // 快捷记录 → 打开日记表单并预选类型
+        function quickAdd(type) {
+            switchTab('diary');
+            setTimeout(() => showAddDiaryModal(type), 100);
+        }
+
+        // 模态框
+        function showModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        let feedbackImageFiles = [];
+        let previewImages = [];
+        let currentPreviewIndex = 0;
+        let currentFeedbackImagesKey = '';
+
+        function showFeedbackModal() {
+            document.getElementById('feedback-form').reset();
+            feedbackImageFiles = [];
+            document.getElementById('feedback-images-preview').innerHTML = '';
+            document.getElementById('feedback-image-input').value = '';
+            showModal('feedback-modal');
+        }
+
+        async function previewFeedbackImages(e) {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            const maxImages = 3;
+            const currentCount = feedbackImageFiles.length;
+            const remaining = maxImages - currentCount;
+            
+            if (remaining <= 0) {
+                showToast('最多只能上传3张图片', 'error');
+                return;
+            }
+
+            for (let i = 0; i < Math.min(files.length, remaining); i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                await new Promise((resolve) => {
+                    reader.onload = x => {
+                        const img = new Image();
+                        img.onload = async () => {
+                            const canvas = document.createElement('canvas');
+                            const max = 600;
+                            let w = img.width, h = img.height;
+                            if (w > h) { if (w > max) { h = h * max / w; w = max; } }
+                            else { if (h > max) { w = w * max / h; h = max; } }
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            canvas.toBlob(async blob => {
+                                if (!blob) { resolve(); return; }
+                                const uuid = uuid4();
+                                await imgPut(uuid, blob);
+                                feedbackImageFiles.push(uuid);
+                                await renderFeedbackImageThumbs();
+                                resolve();
+                            }, 'image/jpeg', 0.7);
+                        };
+                        img.src = x.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            e.target.value = '';
+        }
+
+        async function renderFeedbackImageThumbs() {
+            const container = document.getElementById('feedback-images-preview');
+            if (!feedbackImageFiles.length) {
+                container.innerHTML = '';
+                return;
+            }
+            const results = await Promise.all(feedbackImageFiles.map(uuid => getImgUrl(uuid)));
+            let html = '';
+            results.forEach((url, i) => {
+                if (!url) return;
+                html += `<div class="diary-img-thumb">
+                    <img src="${url}">
+                    <button class="img-del" onclick="removeFeedbackImage(${i})">×</button>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function removeFeedbackImage(i) {
+            const uuid = feedbackImageFiles[i];
+            feedbackImageFiles.splice(i, 1);
+            await imgDel(uuid);
+            renderFeedbackImageThumbs();
+        }
+
+        function openImagePreview(imagesKey, index) {
+            try {
+                if (typeof imagesKey === 'string') {
+                    currentFeedbackImagesKey = imagesKey;
+                    previewImages = window[imagesKey] || [];
+                } else {
+                    previewImages = imagesKey || [];
+                }
+                
+                if (!previewImages.length || index >= previewImages.length || index < 0) {
+                    showToast('图片加载失败', 'error');
+                    return;
+                }
+                
+                currentPreviewIndex = index;
+                updatePreviewImage();
+                showModal('img-preview-modal');
+            } catch (e) {
+                console.error('图片预览错误:', e);
+                showToast('图片预览失败', 'error');
+            }
+        }
+
+        function updatePreviewImage() {
+            try {
+                const img = document.getElementById('preview-img');
+                const index = document.getElementById('preview-index');
+                
+                if (!img || !index || !previewImages.length) return;
+                
+                img.src = previewImages[currentPreviewIndex] || '';
+                index.textContent = `${currentPreviewIndex + 1} / ${previewImages.length}`;
+            } catch (e) {
+                console.error('更新预览图片错误:', e);
+            }
+        }
+
+        function prevPreviewImage() {
+            try {
+                if (previewImages.length && currentPreviewIndex > 0) {
+                    currentPreviewIndex--;
+                    updatePreviewImage();
+                }
+            } catch (e) {
+                console.error('上一张错误:', e);
+            }
+        }
+
+        function nextPreviewImage() {
+            try {
+                if (previewImages.length && currentPreviewIndex < previewImages.length - 1) {
+                    currentPreviewIndex++;
+                    updatePreviewImage();
+                }
+            } catch (e) {
+                console.error('下一张错误:', e);
+            }
+        }
+
+        async function blobToBase64(blob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = reader.result;
+                    if (result && typeof result === 'string') {
+                        const base64Data = result.split(',')[1];
+                        resolve(base64Data || null);
+                    } else {
+                        resolve(null);
+                    }
+                };
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function exportFeedbacks() {
+            const feedbacks = JSON.parse(localStorage.getItem('pet-record-feedbacks') || '[]');
+            if (!feedbacks.length) {
+                showToast('暂无反馈数据', 'error');
+                return;
+            }
+
+            const exportData = {
+                type: 'feedbacks',
+                version: '1.0',
+                exportTime: new Date().toISOString(),
+                feedbacks: []
+            };
+
+            for (const f of feedbacks) {
+                const item = { ...f };
+                if (f.images && f.images.length) {
+                    item.imagesData = [];
+                    for (const uuid of f.images) {
+                        try {
+                            const blob = await imgGet(uuid);
+                            if (blob) {
+                                const base64Data = await blobToBase64(blob);
+                                if (base64Data) {
+                                    item.imagesData.push(base64Data);
+                                }
+                            }
+                        } catch (e) {
+                            console.error('导出图片失败:', e);
+                        }
+                    }
+                }
+                exportData.feedbacks.push(item);
+            }
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `宠物拾光_反馈数据_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('反馈数据导出成功！');
+        }
+
+        function submitFeedback() {
+            const type = document.getElementById('feedback-type').value;
+            const content = document.getElementById('feedback-content').value;
+            const contact = document.getElementById('feedback-contact').value;
+
+            if (!content.trim()) {
+                showToast('请输入反馈内容', 'error');
+                return;
+            }
+
+            const feedback = {
+                type: type,
+                content: content,
+                contact: contact,
+                images: [...feedbackImageFiles],
+                timestamp: new Date().toISOString(),
+                appVersion: 'v1.0'
+            };
+
+            const feedbacks = JSON.parse(localStorage.getItem('pet-record-feedbacks') || '[]');
+            feedbacks.push(feedback);
+            localStorage.setItem('pet-record-feedbacks', JSON.stringify(feedbacks));
+
+            showToast('反馈提交成功！感谢您的宝贵意见 ❤️');
+            feedbackImageFiles = [];
+            closeModal('feedback-modal');
+        }
+
+        async function showMyFeedbacks() {
+            try {
+                const feedbacks = JSON.parse(localStorage.getItem('pet-record-feedbacks') || '[]');
+                const container = document.getElementById('myfeedbacks-list');
+
+                if (!feedbacks.length) {
+                    container.innerHTML = '<div class="empty">暂无反馈记录</div>';
+                    showModal('myfeedbacks-modal');
+                    return;
+                }
+
+                const typeLabels = {
+                    bug: '🐛 功能问题',
+                    feature: '✨ 功能建议',
+                    ui: '🎨 界面优化',
+                    other: '💬 其他'
+                };
+
+                const htmlParts = [];
+                for (let idx = 0; idx < feedbacks.length; idx++) {
+                    try {
+                        const f = feedbacks[idx];
+                        const date = new Date(f.timestamp);
+                        const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+                        
+                        let imagesHtml = '';
+                        if (f.images && f.images.length) {
+                            const imgUrls = await Promise.all(f.images.map(uuid => getImgUrl(uuid)));
+                            const validUrls = imgUrls.filter(Boolean);
+                            const imgId = `feedback-img-${idx}`;
+                            window[imgId] = validUrls;
+                            imagesHtml = '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' + 
+                                validUrls.map((url, i) => `<img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="openImagePreview('${imgId}', ${i})" oncontextmenu="return false;">`).join('') + 
+                                '</div>';
+                        }
+
+                        htmlParts.push(`
+                            <div style="background:#faf8f5;border-radius:10px;padding:12px;margin-bottom:10px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <span style="font-size:13px;color:#5a3e36;">${typeLabels[f.type] || f.type}</span>
+                                    <span style="font-size:11px;color:#a08060;">${dateStr}</span>
+                                </div>
+                                <div style="font-size:13px;color:#5a3e36;line-height:1.5;">${f.content}</div>
+                                ${imagesHtml}
+                                ${f.contact ? `<div style="font-size:11px;color:#a08060;margin-top:6px;">📧 ${f.contact}</div>` : ''}
+                            </div>
+                        `);
+                    } catch (e) {
+                        console.error('渲染反馈项错误:', e);
+                    }
+                }
+
+                container.innerHTML = htmlParts.join('');
+                showModal('myfeedbacks-modal');
+            } catch (e) {
+                console.error('加载反馈列表错误:', e);
+                showToast('加载反馈列表失败', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
