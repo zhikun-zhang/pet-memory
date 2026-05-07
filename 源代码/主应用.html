@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -296,7 +296,6 @@
                     <select id="deworm-filter" onchange="renderList('deworm')"><option value="all">全部宠物</option></select>
                     <button class="btn btn-primary" onclick="showAddModal('deworm')">+ 添加驱虫</button>
                 </div>
-                <div class="alert" id="deworm-alert" style="display:none"></div>
                 <div class="record-list" id="deworm-list"></div>
             </div>
 
@@ -306,7 +305,6 @@
                     <select id="groom-filter" onchange="renderList('groom')"><option value="all">全部宠物</option></select>
                     <button class="btn btn-primary" onclick="showAddModal('groom')">+ 添加洗护</button>
                 </div>
-                <div class="alert" id="groom-alert" style="display:none"></div>
                 <div class="record-list" id="groom-list"></div>
             </div>
 
@@ -944,27 +942,34 @@
                     
                     let daysUntilReminder = 0;
                     let reminderType = '';
+                    let intervalDays = 0;
                     
                     switch(type) {
                         case 'vaccine':
-                            daysUntilReminder = Math.floor((lastDate.getTime() + 30 * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
+                            intervalDays = 30;
+                            daysUntilReminder = Math.floor((lastDate.getTime() + intervalDays * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
                             reminderType = '💉 疫苗';
                             break;
                         case 'deworm':
-                            daysUntilReminder = Math.floor((lastDate.getTime() + 30 * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
+                            intervalDays = 30;
+                            daysUntilReminder = Math.floor((lastDate.getTime() + intervalDays * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
                             reminderType = '💊 驱虫';
                             break;
                         case 'groom':
-                            daysUntilReminder = Math.floor((lastDate.getTime() + 15 * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
+                            intervalDays = 15;
+                            daysUntilReminder = Math.floor((lastDate.getTime() + intervalDays * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
                             reminderType = '🛁 洗护';
                             break;
                     }
                     
-                    if (daysUntilReminder <= 7 && daysUntilReminder >= -30) {
+                    if (daysUntilReminder <= 7 || daysUntilReminder < 0) {
                         let status = '';
                         let color = '';
                         
-                        if (daysUntilReminder < 0) {
+                        if (daysUntilReminder < -30) {
+                            status = `已过期 ${Math.abs(daysUntilReminder)} 天（建议周期${intervalDays}天）`;
+                            color = '#ff6b6b';
+                        } else if (daysUntilReminder < 0) {
                             status = `已过期 ${Math.abs(daysUntilReminder)} 天`;
                             color = '#ff6b6b';
                         } else if (daysUntilReminder === 0) {
@@ -2083,35 +2088,7 @@
                 }
             });
 
-            checkAlerts(type);
-        }
-
-        function checkAlerts(type) {
-            if (type !== 'deworm' && type !== 'groom') return;
-
-            const alert = document.getElementById(type + '-alert');
-            const alerts = [];
-
-            App.data.pets.forEach(pet => {
-                const petRecords = (App.data.records[type] || []).filter(r => r.petName === pet.name);
-                if (petRecords.length > 0) {
-                    const lastRecord = petRecords.sort((a, b) => new Date(b.datetime || b.date || 0) - new Date(a.datetime || a.date || 0))[0];
-                    const days = Math.floor((new Date() - new Date(lastRecord.date)) / (1000 * 60 * 60 * 24));
-                    if (days > 30) {
-                        alerts.push(`${pet.name}: ${days}天`);
-                    }
-                }
-            });
-
-            if (alerts.length > 0) {
-                alert.innerHTML = `<b>⚠️ ${type === 'deworm' ? '驱虫' : '洗护'}提醒</b>: ${alerts.join(', ')}`;
-                alert.style.display = '';
-            } else {
-                alert.style.display = 'none';
-            }
-        }
-
-        async function editRecord(type, idx) {
+            async function editRecord(type, idx) {
             const r = App.data.records[type][idx];
             if (!r) return;
             App.state.editingRecord = { type, idx };

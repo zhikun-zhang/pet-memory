@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -267,6 +267,8 @@
         <div class="content">
             <!-- 我的宠物 -->
             <div class="panel active" id="pets-panel">
+                <div id="reminders-container"></div>
+                <div id="stats-container"></div>
                 <div class="pet-cards" id="pet-cards"></div>
             </div>
 
@@ -294,7 +296,6 @@
                     <select id="deworm-filter" onchange="renderList('deworm')"><option value="all">全部宠物</option></select>
                     <button class="btn btn-primary" onclick="showAddModal('deworm')">+ 添加驱虫</button>
                 </div>
-                <div class="alert" id="deworm-alert" style="display:none"></div>
                 <div class="record-list" id="deworm-list"></div>
             </div>
 
@@ -304,7 +305,6 @@
                     <select id="groom-filter" onchange="renderList('groom')"><option value="all">全部宠物</option></select>
                     <button class="btn btn-primary" onclick="showAddModal('groom')">+ 添加洗护</button>
                 </div>
-                <div class="alert" id="groom-alert" style="display:none"></div>
                 <div class="record-list" id="groom-list"></div>
             </div>
 
@@ -923,6 +923,203 @@
             return text.slice(0, maxLength) + '...';
         }
 
+        function getReminders() {
+            const reminders = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            App.data.pets.forEach(pet => {
+                const petName = pet.name;
+                
+                CONSTANTS.RECORD_TYPES.forEach(type => {
+                    if (!['vaccine', 'deworm', 'groom'].includes(type)) return;
+                    
+                    const records = (App.data.records[type] || []).filter(r => r.petName === petName);
+                    if (!records.length) return;
+                    
+                    const lastRecord = records.sort((a, b) => new Date(b.date || b.datetime || 0) - new Date(a.date || a.datetime || 0))[0];
+                    const lastDate = new Date(lastRecord.date || lastRecord.datetime);
+                    
+                    let daysUntilReminder = 0;
+                    let reminderType = '';
+                    let intervalDays = 0;
+                    
+                    switch(type) {
+                        case 'vaccine':
+                            intervalDays = 30;
+                            daysUntilReminder = Math.floor((lastDate.getTime() + intervalDays * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
+                            reminderType = '💉 疫苗';
+                            break;
+                        case 'deworm':
+                            intervalDays = 30;
+                            daysUntilReminder = Math.floor((lastDate.getTime() + intervalDays * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
+                            reminderType = '💊 驱虫';
+                            break;
+                        case 'groom':
+                            intervalDays = 15;
+                            daysUntilReminder = Math.floor((lastDate.getTime() + intervalDays * 24 * 60 * 60 * 1000 - today.getTime()) / (24 * 60 * 60 * 1000));
+                            reminderType = '🛁 洗护';
+                            break;
+                    }
+                    
+                    if (daysUntilReminder <= 7 || daysUntilReminder < 0) {
+                        let status = '';
+                        let color = '';
+                        
+                        if (daysUntilReminder < -30) {
+                            status = `已过期 ${Math.abs(daysUntilReminder)} 天（建议周期${intervalDays}天）`;
+                            color = '#ff6b6b';
+                        } else if (daysUntilReminder < 0) {
+                            status = `已过期 ${Math.abs(daysUntilReminder)} 天`;
+                            color = '#ff6b6b';
+                        } else if (daysUntilReminder === 0) {
+                            status = '今天到期';
+                            color = '#feca57';
+                        } else if (daysUntilReminder <= 3) {
+                            status = `${daysUntilReminder} 天后到期`;
+                            color = '#feca57';
+                        } else {
+                            status = `${daysUntilReminder} 天后到期`;
+                            color = '#1dd1a1';
+                        }
+                        
+                        reminders.push({
+                            petName,
+                            type: reminderType,
+                            status,
+                            color,
+                            daysUntilReminder
+                        });
+                    }
+                });
+            });
+            
+            return reminders.sort((a, b) => a.daysUntilReminder - b.daysUntilReminder);
+        }
+
+        function showReminders() {
+            const reminders = getReminders();
+            if (!reminders.length) return;
+            
+            let html = '<div class="alert" style="background:#fff3cd;border-left:4px solid #feca57;margin-bottom:15px;padding:12px;border-radius:10px;">';
+            html += '<div style="font-weight:600;color:#856404;margin-bottom:8px;">🔔 近期提醒</div>';
+            html += '<div style="display:flex;flex-direction:column;gap:4px;">';
+            
+            reminders.forEach(r => {
+                html += `<div style="display:flex;align-items:center;gap:8px;font-size:13px;">`;
+                html += `<span>${r.type}</span>`;
+                html += `<span style="color:#666;">${r.petName}</span>`;
+                html += `<span style="color:${r.color};font-weight:500;">${r.status}</span>`;
+                html += `</div>`;
+            });
+            
+            html += '</div></div>';
+            
+            return html;
+        }
+
+        function getMonthlyStats() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            const stats = {
+                totalExpense: 0,
+                expenseByCategory: {},
+                recordsCount: {},
+                monthlyExpenses: []
+            };
+            
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date(currentYear, currentMonth - i, 1);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                stats.monthlyExpenses.push({ month: `${year}-${String(month + 1).padStart(2, '0')}`, amount: 0 });
+            }
+            
+            CONSTANTS.RECORD_TYPES.forEach(type => {
+                stats.recordsCount[type] = 0;
+                const records = App.data.records[type] || [];
+                
+                records.forEach(record => {
+                    const recordDate = new Date(record.date || record.datetime);
+                    const recordMonth = recordDate.getMonth();
+                    const recordYear = recordDate.getFullYear();
+                    
+                    stats.recordsCount[type]++;
+                    
+                    if (recordMonth === currentMonth && recordYear === currentYear) {
+                        if (type === 'expense' && record.amount) {
+                            const amount = parseFloat(record.amount) || 0;
+                            stats.totalExpense += amount;
+                            
+                            const category = record.category || '其他';
+                            stats.expenseByCategory[category] = (stats.expenseByCategory[category] || 0) + amount;
+                        }
+                    }
+                    
+                    const monthIdx = 11 - (currentMonth - recordMonth + 12 * (currentYear - recordYear)) % 12;
+                    if (monthIdx >= 0 && monthIdx < 12 && type === 'expense' && record.amount) {
+                        stats.monthlyExpenses[monthIdx].amount += parseFloat(record.amount) || 0;
+                    }
+                });
+            });
+            
+            return stats;
+        }
+
+        function showStats() {
+            const stats = getMonthlyStats();
+            if (!App.data.pets.length) return '';
+            
+            let html = '<div class="panel stats-panel" style="margin-top:15px;">';
+            html += '<div style="font-weight:600;color:#5a3e36;margin-bottom:12px;font-size:16px;">📊 数据统计</div>';
+            
+            html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">';
+            
+            html += `<div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:12px;padding:15px;color:#fff;">`;
+            html += '<div style="font-size:12px;opacity:0.9;margin-bottom:4px;">本月消费</div>';
+            html += `<div style="font-size:24px;font-weight:700;">¥${stats.totalExpense.toFixed(2)}</div>`;
+            html += '</div>';
+            
+            const totalRecords = Object.values(stats.recordsCount).reduce((a, b) => a + b, 0);
+            html += `<div style="background:linear-gradient(135deg, #11998e 0%, #38ef7d 100%);border-radius:12px;padding:15px;color:#fff;">`;
+            html += '<div style="font-size:12px;opacity:0.9;margin-bottom:4px;">总记录数</div>';
+            html += `<div style="font-size:24px;font-weight:700;">${totalRecords}</div>`;
+            html += '</div>';
+            
+            html += '</div>';
+            
+            if (Object.keys(stats.expenseByCategory).length) {
+                html += '<div style="margin-top:12px;">';
+                html += '<div style="font-size:14px;font-weight:500;color:#5a3e36;margin-bottom:8px;">消费分类</div>';
+                html += '<div style="display:flex;flex-wrap:gap:8px;">';
+                
+                Object.entries(stats.expenseByCategory).forEach(([category, amount]) => {
+                    const percentage = ((amount / stats.totalExpense) * 100).toFixed(1);
+                    html += `<div style="display:flex;align-items:center;gap:8px;margin-right:15px;margin-bottom:6px;">`;
+                    html += `<span style="font-size:13px;color:#666;">${category}</span>`;
+                    html += `<div style="background:#f0e0d0;border-radius:8px;height:12px;width:80px;overflow:hidden;">`;
+                    html += `<div style="background:linear-gradient(90deg, #ff9a9e, #fecfef);height:100%;width:${percentage}%;"></div>`;
+                    html += `</div>`;
+                    html += `<span style="font-size:12px;color:#5a3e36;font-weight:500;">¥${amount.toFixed(2)}</span>`;
+                    html += `</div>`;
+                });
+                
+                html += '</div></div>';
+            }
+            
+            html += '</div>';
+            
+            return html;
+        }
+
+        function renderStats() {
+            const container = document.getElementById('stats-container');
+            const statsHtml = showStats();
+            container.innerHTML = statsHtml || '';
+        }
+
         function calcAge(birth) {
             if (!birth) return '未知';
             const a = new Date(birth);
@@ -1007,9 +1204,17 @@
 
         function renderAll() {
             renderPets();
+            renderReminders();
+            renderStats();
             updateSelectors();
             ['vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight', 'diary'].forEach(renderList);
             renderExpense();
+        }
+
+        function renderReminders() {
+            const container = document.getElementById('reminders-container');
+            const remindersHtml = showReminders();
+            container.innerHTML = remindersHtml || '';
         }
 
         function updateSelectors() {
@@ -1883,35 +2088,7 @@
                 }
             });
 
-            checkAlerts(type);
-        }
-
-        function checkAlerts(type) {
-            if (type !== 'deworm' && type !== 'groom') return;
-
-            const alert = document.getElementById(type + '-alert');
-            const alerts = [];
-
-            App.data.pets.forEach(pet => {
-                const petRecords = (App.data.records[type] || []).filter(r => r.petName === pet.name);
-                if (petRecords.length > 0) {
-                    const lastRecord = petRecords.sort((a, b) => new Date(b.datetime || b.date || 0) - new Date(a.datetime || a.date || 0))[0];
-                    const days = Math.floor((new Date() - new Date(lastRecord.date)) / (1000 * 60 * 60 * 24));
-                    if (days > 30) {
-                        alerts.push(`${pet.name}: ${days}天`);
-                    }
-                }
-            });
-
-            if (alerts.length > 0) {
-                alert.innerHTML = `<b>⚠️ ${type === 'deworm' ? '驱虫' : '洗护'}提醒</b>: ${alerts.join(', ')}`;
-                alert.style.display = '';
-            } else {
-                alert.style.display = 'none';
-            }
-        }
-
-        async function editRecord(type, idx) {
+            async function editRecord(type, idx) {
             const r = App.data.records[type][idx];
             if (!r) return;
             App.state.editingRecord = { type, idx };
