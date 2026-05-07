@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -995,6 +995,9 @@
             });
             
             return reminders.sort((a, b) => a.daysUntilReminder - b.daysUntilReminder);
+        }
+
+        function checkAlerts(type) {
         }
 
         function showReminders() {
@@ -2172,6 +2175,7 @@
                 renderExpense();
             }
         }
+        }
 
         // 体重图表
         function renderWeight() {
@@ -2226,7 +2230,7 @@
             renderList('weight');
         }
 
-                function renderExpense() {
+        function renderExpense() {
             const filter = document.getElementById('expense-filter') ? document.getElementById('expense-filter').value : 'all';
             const container = document.getElementById('expense-list');
 
@@ -2305,7 +2309,7 @@
             container.innerHTML = html;
         }
 
-function showAddDiaryModal(preType) {
+        function showAddDiaryModal(preType) {
             if (!App.data.pets.length) { showToast('请先添加宠物', 'error'); return; }
             updateSelectors();
             App.state.editingRecord = null;
