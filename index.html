@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐱 土豆拾光 - 宠物记录</title>
+    <meta http-equiv="refresh" content="0; url=源代码/主应用.html">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .loader-icon {
+            font-size: 60px;
+            animation: catBounce 1s ease-in-out infinite;
+        }
+        .loader-text {
+            margin-top: 20px;
+            color: #5a3e36;
+            font-size: 16px;
+        }
+        .redirect-hint {
+            margin-top: 10px;
+            color: #a08060;
+            font-size: 14px;
+        }
+        @keyframes catBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        a {
+            color: #ff9a9e;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-icon">🐱</div>
+    <div class="loader-text">正在跳转到土豆拾光...</div>
+    <div class="redirect-hint">如果没有自动跳转，请点击 <a href="源代码/主应用.html">这里</a></div>
+</body>
+</html>
