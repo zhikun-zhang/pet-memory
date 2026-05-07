@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -63,25 +63,25 @@
         .panel { display: none; }
         .panel.active { display: block; }
 
-        .pet-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-        .pet-card { background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%); border-radius: 14px; padding: 12px; }
-        .pet-card .pet-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .pet-card .avatar { width: 60px; height: 60px; border-radius: 10px; background: #f0e0d0; display: flex; align-items: center; justify-content: center; font-size: 30px; overflow: hidden; cursor: pointer; position: relative; flex-shrink: 0; }
+        .pet-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+        .pet-card { background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%); border-radius: 14px; padding: 12px; box-sizing: border-box; min-width: 0; }
+        .pet-card .pet-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .pet-card .avatar { width: 56px; height: 56px; border-radius: 10px; background: #f0e0d0; display: flex; align-items: center; justify-content: center; font-size: 28px; overflow: hidden; cursor: pointer; position: relative; flex-shrink: 0; }
         .pet-card .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
         .pet-card .avatar:hover::after { content: '换头像'; position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
-        .pet-card .pet-name { font-size: 17px; color: #5a3e36; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-        .pet-card .gender-icon { font-size: 15px; }
+        .pet-card .pet-name { font-size: 16px; color: #5a3e36; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+        .pet-card .gender-icon { font-size: 14px; }
         .pet-card .companion { font-size: 12px; color: #e17055; font-style: italic; margin-top: 3px; font-weight: 500; }
         .pet-card .pet-breed { color: #8b7355; font-size: 12px; }
-        .pet-card .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-        .pet-card .info-item { background: rgba(255,255,255,0.6); padding: 5px 8px; border-radius: 6px; font-size: 12px; white-space: nowrap; }
-        .pet-card .info-item label { color: #a08060; font-size: 10px; display: block; white-space: nowrap; }
-        .pet-card .info-item .value { font-weight: 500; }
+        .pet-card .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+        .pet-card .info-item { background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 6px; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .pet-card .info-item label { color: #a08060; font-size: 9px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pet-card .info-item .value { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pet-card .info-item .value.yes { color: #1dd1a1; }
         .pet-card .info-item .value.no { color: #ff6b6b; }
         .pet-card .info-item .value.unknown { color: #a08060; }
         .pet-card { cursor: pointer; transition: transform 0.2s ease; }
-.pet-card:active { transform: scale(0.98); }
+        .pet-card:active { transform: scale(0.98); }
 
         .form-group { margin-bottom: 12px; }
         .quick-btns { display: flex; gap: 6px; margin-top: 6px; }
@@ -182,14 +182,15 @@
             .tabs { gap: 4px; }
             .tab { padding: 6px 9px; font-size: 12px; border-radius: 7px; }
             .content { padding: 12px; border-radius: 14px; }
-            .pet-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .pet-card { padding: 10px; }
-            .pet-card .avatar { width: 50px; height: 50px; font-size: 24px; border-radius: 8px; }
+            .pet-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; box-sizing: border-box; }
+            .pet-card { padding: 8px; box-sizing: border-box; min-width: 0; }
+            .pet-card .avatar { width: 48px; height: 48px; font-size: 22px; border-radius: 8px; }
             .pet-card .avatar img { border-radius: 8px; }
-            .pet-card .pet-name { font-size: 15px; }
-            .pet-card .info-grid { grid-template-columns: repeat(2, 1fr); gap: 4px; }
-            .pet-card .info-item { padding: 4px 6px; font-size: 11px; white-space: nowrap; }
-            .pet-card .info-item label { font-size: 9px; white-space: nowrap; }
+            .pet-card .pet-name { font-size: 14px; }
+            .pet-card .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+            .pet-card .info-item { padding: 3px 5px; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+            .pet-card .info-item label { font-size: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .pet-card .info-item .value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .pet-card .actions { flex-wrap: wrap; }
             .form-row { grid-template-columns: 1fr; }
             .btn { padding: 10px 16px; font-size: 14px; }
@@ -209,6 +210,34 @@
             .weight-chart { padding: 10px; }
             .header-settings { font-size: 18px; }
         }
+
+        @media (max-width: 320px) {
+            body { padding: 6px; }
+            h1 { font-size: 16px; margin-bottom: 8px; }
+            h1 span { font-size: 22px; }
+            .tabs-container { margin-bottom: 8px; }
+            .tabs { gap: 3px; }
+            .tab { padding: 4px 6px; font-size: 10px; border-radius: 5px; }
+            .tab span { display: none; }
+            .content { padding: 8px; border-radius: 10px; }
+            .pet-cards { grid-template-columns: 1fr !important; gap: 6px; width: 100%; box-sizing: border-box; }
+            .pet-card { padding: 8px; box-sizing: border-box; min-width: 0; }
+            .pet-card .avatar { width: 50px; height: 50px; font-size: 22px; border-radius: 8px; }
+            .pet-card .avatar img { border-radius: 8px; }
+            .pet-card .pet-name { font-size: 14px; }
+            .pet-card .info-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 4px; }
+            .pet-card .info-item { padding: 3px 4px; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+            .pet-card .info-item label { font-size: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .pet-card .info-item .value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .pet-card .companion { font-size: 11px; }
+            .btn { padding: 8px 12px; font-size: 12px; }
+            .filter-bar { flex-direction: column; gap: 6px; }
+            .filter-bar select { width: 100%; }
+            .modal-content { width: 98%; max-height: 92vh; padding: 10px; border-radius: 10px; }
+            .alert { padding: 8px; font-size: 11px; }
+            .custom-select-trigger { padding: 6px 10px; font-size: 12px; }
+        }
+
         .action-btn span:last-child { font-size: 11px; color: #5a3e36; }
 
         .diary-detail-page { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 100; display: flex; flex-direction: column; }
@@ -232,6 +261,91 @@
         .detail-detail { font-size: 14px; color: #6a5a4a; padding: 12px; background: #faf8f5; border-radius: 10px; margin-top: 15px; }
         .detail-footer { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #f0e8e0; background: #fff; position: sticky; bottom: 0; }
         .detail-footer .btn { flex: 1; padding: 12px; font-size: 15px; border-radius: 10px; }
+
+        /* 自定义下拉菜单 */
+        .custom-select {
+            position: relative;
+            min-width: 130px;
+            cursor: pointer;
+        }
+        .custom-select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #fff;
+            border: 2px solid #f0e0d0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #5a3e36;
+            transition: all 0.2s ease;
+        }
+        .custom-select-trigger:hover {
+            border-color: #ff9a9e;
+        }
+        .custom-select-trigger.active {
+            border-color: #ff9a9e;
+            box-shadow: 0 0 0 3px rgba(255, 154, 158, 0.1);
+            border-radius: 10px 10px 0 0;
+        }
+        .custom-select-trigger .arrow {
+            font-size: 12px;
+            transition: transform 0.2s ease;
+            color: #a08060;
+        }
+        .custom-select-trigger.active .arrow {
+            transform: rotate(180deg);
+        }
+        .custom-select-options {
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 2px solid #f0e0d0;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .custom-select-options.show {
+            display: block;
+        }
+        .custom-select-option {
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #5a3e36;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .custom-select-option:hover {
+            background: #fff5f5;
+        }
+        .custom-select-option.selected {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: #5a3e36;
+            font-weight: 500;
+        }
+        .custom-select-option:first-child {
+            border-radius: 0;
+        }
+        .custom-select-option:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        /* 隐藏原生select */
+        .custom-select select {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .custom-select {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -275,7 +389,16 @@
             <!-- 日记 -->
             <div class="panel" id="diary-panel">
                 <div class="filter-bar">
-                    <select id="diary-filter" onchange="renderList('diary')"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-diary-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-diary-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-diary-filter', 'all', '全部宠物'); renderList('diary')">全部宠物</div>
+                        </div>
+                        <select id="diary-filter" onchange="renderList('diary')"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddDiaryModal()">+ 写日记</button>
                 </div>
                 <div class="record-list" id="diary-list"></div>
@@ -284,7 +407,16 @@
             <!-- 疫苗 -->
             <div class="panel" id="vaccine-panel">
                 <div class="filter-bar">
-                    <select id="vaccine-filter" onchange="renderList('vaccine')"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-vaccine-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-vaccine-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-vaccine-filter', 'all', '全部宠物'); renderList('vaccine')">全部宠物</div>
+                        </div>
+                        <select id="vaccine-filter" onchange="renderList('vaccine')"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddModal('vaccine')">+ 添加疫苗</button>
                 </div>
                 <div class="record-list" id="vaccine-list"></div>
@@ -293,7 +425,16 @@
             <!-- 驱虫 -->
             <div class="panel" id="deworm-panel">
                 <div class="filter-bar">
-                    <select id="deworm-filter" onchange="renderList('deworm')"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-deworm-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-deworm-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-deworm-filter', 'all', '全部宠物'); renderList('deworm')">全部宠物</div>
+                        </div>
+                        <select id="deworm-filter" onchange="renderList('deworm')"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddModal('deworm')">+ 添加驱虫</button>
                 </div>
                 <div class="record-list" id="deworm-list"></div>
@@ -302,7 +443,16 @@
             <!-- 洗护 -->
             <div class="panel" id="groom-panel">
                 <div class="filter-bar">
-                    <select id="groom-filter" onchange="renderList('groom')"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-groom-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-groom-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-groom-filter', 'all', '全部宠物'); renderList('groom')">全部宠物</div>
+                        </div>
+                        <select id="groom-filter" onchange="renderList('groom')"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddModal('groom')">+ 添加洗护</button>
                 </div>
                 <div class="record-list" id="groom-list"></div>
@@ -311,7 +461,16 @@
             <!-- 饮食 -->
             <div class="panel" id="food-panel">
                 <div class="filter-bar">
-                    <select id="food-filter" onchange="renderList('food')"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-food-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-food-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-food-filter', 'all', '全部宠物'); renderList('food')">全部宠物</div>
+                        </div>
+                        <select id="food-filter" onchange="renderList('food')"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddModal('food')">+ 记录饮食</button>
                 </div>
                 <div class="record-list" id="food-list"></div>
@@ -320,7 +479,16 @@
             <!-- 病例 -->
             <div class="panel" id="medical-panel">
                 <div class="filter-bar">
-                    <select id="medical-filter" onchange="renderList('medical')"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-medical-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-medical-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-medical-filter', 'all', '全部宠物'); renderList('medical')">全部宠物</div>
+                        </div>
+                        <select id="medical-filter" onchange="renderList('medical')"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddModal('medical')">+ 添加病例</button>
                 </div>
                 <div class="record-list" id="medical-list"></div>
@@ -329,7 +497,16 @@
             <!-- 绝育 -->
             <div class="panel" id="neuter-panel">
                 <div class="filter-bar">
-                    <select id="neuter-filter" onchange="renderList('neuter')"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-neuter-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-neuter-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-neuter-filter', 'all', '全部宠物'); renderList('neuter')">全部宠物</div>
+                        </div>
+                        <select id="neuter-filter" onchange="renderList('neuter')"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddModal('neuter')">+ 记录绝育</button>
                 </div>
                 <div class="record-list" id="neuter-list"></div>
@@ -338,7 +515,16 @@
             <!-- 体重 -->
             <div class="panel" id="weight-panel">
                 <div class="filter-bar">
-                    <select id="weight-filter" onchange="renderWeight()"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-weight-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-weight-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-weight-filter', 'all', '全部宠物'); renderWeight()">全部宠物</div>
+                        </div>
+                        <select id="weight-filter" onchange="renderWeight()"><option value="all">全部宠物</option></select>
+                    </div>
                     <button class="btn btn-primary" onclick="showAddModal('weight')">+ 记录体重</button>
                 </div>
                 <div class="weight-chart">
@@ -352,7 +538,16 @@
             <!-- 记账 -->
             <div class="panel" id="expense-panel">
                 <div class="filter-bar">
-                    <select id="expense-filter" onchange="renderExpense()"><option value="all">全部宠物</option></select>
+                    <div class="custom-select" id="custom-expense-filter">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('custom-expense-filter')">
+                            <span class="custom-select-value">全部宠物</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-select-option selected" data-value="all" onclick="selectCustomOption('custom-expense-filter', 'all', '全部宠物'); renderExpense()">全部宠物</div>
+                        </div>
+                        <select id="expense-filter" onchange="renderExpense()"><option value="all">全部宠物</option></select>
+                    </div>
                 </div>
                 <div class="record-list" id="expense-list"></div>
             </div>
@@ -654,6 +849,79 @@
     </div>
 
     <script>
+        // 自定义下拉菜单交互
+        function toggleCustomSelect(selectId) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            
+            const trigger = select.querySelector('.custom-select-trigger');
+            const options = select.querySelector('.custom-select-options');
+            
+            document.querySelectorAll('.custom-select-options').forEach(opt => {
+                if (opt !== options) opt.classList.remove('show');
+            });
+            document.querySelectorAll('.custom-select-trigger').forEach(tr => {
+                if (tr !== trigger) tr.classList.remove('active');
+            });
+            
+            trigger.classList.toggle('active');
+            options.classList.toggle('show');
+        }
+
+        function selectCustomOption(selectId, value, text) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            
+            const valueSpan = select.querySelector('.custom-select-value');
+            const options = select.querySelectorAll('.custom-select-option');
+            const hiddenSelect = select.querySelector('select');
+            
+            valueSpan.textContent = text;
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            const selectedOption = select.querySelector(`.custom-select-option[data-value="${value}"]`);
+            if (selectedOption) selectedOption.classList.add('selected');
+            
+            if (hiddenSelect) hiddenSelect.value = value;
+            
+            select.querySelector('.custom-select-options').classList.remove('show');
+            select.querySelector('.custom-select-trigger').classList.remove('active');
+        }
+
+        function updateCustomSelectOptions(pets) {
+            const types = ['diary', 'vaccine', 'deworm', 'groom', 'food', 'medical', 'neuter', 'weight', 'expense'];
+            
+            types.forEach(type => {
+                const customSelect = document.getElementById(`custom-${type}-filter`);
+                if (!customSelect) return;
+                
+                const optionsContainer = customSelect.querySelector('.custom-select-options');
+                if (!optionsContainer) return;
+                
+                let optionsHtml = `<div class="custom-select-option ${document.getElementById(type + '-filter').value === 'all' ? 'selected' : ''}" data-value="all" onclick="selectCustomOption('custom-${type}-filter', 'all', '全部宠物'); ${type === 'weight' ? 'renderWeight()' : type === 'expense' ? 'renderExpense()' : `renderList('${type}')`}">全部宠物</div>`;
+                
+                pets.forEach(pet => {
+                    const isSelected = document.getElementById(type + '-filter').value === pet.name;
+                    optionsHtml += `<div class="custom-select-option ${isSelected ? 'selected' : ''}" data-value="${pet.name}" onclick="selectCustomOption('custom-${type}-filter', '${pet.name}', '${pet.name}'); ${type === 'weight' ? 'renderWeight()' : type === 'expense' ? 'renderExpense()' : `renderList('${type}')`}">${pet.name}</div>`;
+                });
+                
+                optionsContainer.innerHTML = optionsHtml;
+                
+                const currentValue = document.getElementById(type + '-filter').value;
+                const currentText = currentValue === 'all' ? '全部宠物' : pets.find(p => p.name === currentValue)?.name || '全部宠物';
+                const valueSpan = customSelect.querySelector('.custom-select-value');
+                if (valueSpan) valueSpan.textContent = currentText;
+            });
+        }
+
+        // 点击外部关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-select')) {
+                document.querySelectorAll('.custom-select-options').forEach(opt => opt.classList.remove('show'));
+                document.querySelectorAll('.custom-select-trigger').forEach(tr => tr.classList.remove('active'));
+            }
+        });
+
         document.addEventListener('contextmenu', function(e) {
             const modal = e.target.closest('.modal');
             if (modal) {
@@ -1235,6 +1503,9 @@
             if (rp) rp.innerHTML = opts || '<option>请先添加宠物</option>';
             const dp = document.getElementById('diary-pet');
             if (dp) dp.innerHTML = opts || '<option>请先添加宠物</option>';
+            
+            // 更新自定义下拉菜单
+            updateCustomSelectOptions(App.data.pets);
         }
 
         // 宠物相关
@@ -2043,7 +2314,7 @@
                 const clickHandler = type === 'diary' ? `openDiaryDetail(${r.id})` : `openDiaryDetail(${r.id}, '${type}', ${recordIdx})`;
                 return `<div class="record-item" onclick="${clickHandler}">
                     <div class="left">
-                        <span class="pet-tag" style="background:${color}20;color:${color}">${r.petName}</span>
+                        <span class="pet-tag" style="background:${color}40;color:#5a3e36">${r.petName}</span>
                         <div class="title">${title}</div>
                         <div class="meta">${dateStr}</div>
                     </div>
